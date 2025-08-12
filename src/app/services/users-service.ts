@@ -30,6 +30,11 @@ export interface Level {
   level_name: string;
 }
 
+export interface Role {
+  id?: number;
+  role_name: string;
+}
+
 export interface Course {
   id?: number;
   course_name: string;
@@ -424,6 +429,30 @@ export class UsersService {
         },
         error: (error) => observer.error(error)
       });
+    });
+  }
+
+  // ==================== ROLE CRUD METHODS ====================
+  
+  getRoles(): Observable<Role[]> {
+    return this.http.get<Role[]>(`${this.apiUrl}/roles/`);
+  }
+
+  createRole(role: Partial<Role>): Observable<Role> {
+    return this.http.post<Role>(`${this.apiUrl}/roles/`, role, {
+      headers: this.getHeaders()
+    });
+  }
+
+  updateRole(id: number, role: Partial<Role>): Observable<Role> {
+    return this.http.put<Role>(`${this.apiUrl}/roles/${id}/`, role, {
+      headers: this.getHeaders()
+    });
+  }
+
+  deleteRole(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/roles/${id}/`, {
+      headers: this.getHeaders()
     });
   }
 }

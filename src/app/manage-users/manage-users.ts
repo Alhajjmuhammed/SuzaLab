@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Dashboard } from '../dashboard/dashboard';
-import { UsersService, User, Student, Campus, Level, Course } from '../services/users-service';
+import { UsersService, User, Student, Campus, Level, Course, Role } from '../services/users-service';
 import { environment } from '../../environments/environment';
 
 interface CombinedUserData {
@@ -27,7 +27,7 @@ interface CombinedUserData {
 })
 export class ManageUsers implements OnInit {
   // Active tab tracking
-  activeTab: 'users' | 'students' | 'campuses' | 'levels' | 'courses' = 'users';
+  activeTab: 'users' | 'students' | 'campuses' | 'levels' | 'courses' | 'roles' = 'users';
   
   // All data for existing tabs
   allUsers: CombinedUserData[] = [];
@@ -41,11 +41,13 @@ export class ManageUsers implements OnInit {
   allCampuses: Campus[] = [];
   allLevels: Level[] = [];
   allCourses: Course[] = [];
+  allRoles: Role[] = [];
   
   // Filtered data for new tabs
   filteredCampuses: Campus[] = [];
   filteredLevels: Level[] = [];
   filteredCourses: Course[] = [];
+  filteredRoles: Role[] = [];
   
   loading = false;
   error: string | null = null;
@@ -65,26 +67,31 @@ export class ManageUsers implements OnInit {
   coursesSearchTerm = '';
   selectedCourseLevel = '';
   selectedCourseCampus = '';
+  rolesSearchTerm = '';
 
   // Form states for new entities
   showCampusForm = false;
   showLevelForm = false;
   showCourseForm = false;
+  showRoleForm = false;
   
   // Forms for new entities
   campusForm: FormGroup;
   levelForm: FormGroup;
   courseForm: FormGroup;
+  roleForm: FormGroup;
   
   // Edit states
   editingCampus: Campus | null = null;
   editingLevel: Level | null = null;
   editingCourse: Course | null = null;
+  editingRole: Role | null = null;
   
   // Submission states
   campusSubmitting = false;
   levelSubmitting = false;
   courseSubmitting = false;
+  roleSubmitting = false;
 
   constructor(
     private usersService: UsersService,
@@ -104,6 +111,10 @@ export class ManageUsers implements OnInit {
       level_id: ['', [Validators.required]],
       campus_id: ['', [Validators.required]]
     });
+
+    this.roleForm = this.fb.group({
+      role_name: ['', [Validators.required, Validators.minLength(2)]]
+    });
   }
 
   ngOnInit() {
@@ -112,6 +123,7 @@ export class ManageUsers implements OnInit {
     this.loadCampusesData();
     this.loadLevelsData();
     this.loadCoursesData();
+    this.loadRolesData();
   }
 
   loadUsersData() {
@@ -251,7 +263,7 @@ export class ManageUsers implements OnInit {
     this.applyStudentsFilters();
   }
 
-  setActiveTab(tab: 'users' | 'students' | 'campuses' | 'levels' | 'courses') {
+  setActiveTab(tab: 'users' | 'students' | 'campuses' | 'levels' | 'courses' | 'roles') {
     this.activeTab = tab;
     // All data is loaded immediately on component init - no lazy loading
   }
@@ -262,6 +274,7 @@ export class ManageUsers implements OnInit {
       case 'campuses': return 'Add Campus';
       case 'levels': return 'Add Level';
       case 'courses': return 'Add Course';
+      case 'roles': return 'Add Role';
       default: return 'Add User';
     }
   }
@@ -425,6 +438,10 @@ export class ManageUsers implements OnInit {
     return this.allCourses.length;
   }
 
+  getRolesCount(): number {
+    return this.allRoles.length;
+  }
+
   // ==================== NEW TAB DATA LOADING METHODS ====================
   
   loadCampusesData() {
@@ -470,6 +487,22 @@ export class ManageUsers implements OnInit {
       error: (error) => {
         console.error('Error loading courses:', error);
         this.error = 'Failed to load courses data';
+        this.loading = false;
+      }
+    });
+  }
+
+  loadRolesData() {
+    this.loading = true;
+    this.usersService.getRoles().subscribe({
+      next: (roles) => {
+        this.allRoles = roles;
+        this.applyRolesFilters();
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error loading roles:', error);
+        this.error = 'Failed to load roles data';
         this.loading = false;
       }
     });
@@ -529,6 +562,18 @@ export class ManageUsers implements OnInit {
       const matchesCampus = !this.selectedCourseCampus || courseCampusId?.toString() === this.selectedCourseCampus;
       
       return matchesSearch && matchesLevel && matchesCampus;
+    });
+  }
+
+  onRolesSearchChange(event: any) {
+    this.rolesSearchTerm = event.target.value;
+    this.applyRolesFilters();
+  }
+
+  applyRolesFilters() {
+    this.filteredRoles = this.allRoles.filter(role => {
+      const matchesSearch = role.role_name.toLowerCase().includes(this.rolesSearchTerm.toLowerCase());
+      return matchesSearch;
     });
   }
 
@@ -726,6 +771,71 @@ export class ManageUsers implements OnInit {
         },
         error: (error) => {
           console.error('Error deleting course:', error);
+        }
+      });
+    }
+  }
+
+  // ==================== ROLE CRUD METHODS ====================
+  
+  addNewRole() {
+    this.showRoleForm = true;
+    this.editingRole = null;
+    this.roleForm.reset();
+  }
+
+  editRole(role: Role) {
+    this.showRoleForm = true;
+    this.editingRole = role;
+    this.roleForm.patchValue({
+      role_name: role.role_name
+    });
+  }
+
+  onRoleSubmit() {
+    if (this.roleForm.valid) {
+      this.roleSubmitting = true;
+      const roleData = this.roleForm.value;
+
+      const operation = this.editingRole 
+        ? this.usersService.updateRole(this.editingRole.id!, roleData)
+        : this.usersService.createRole(roleData);
+
+      operation.subscribe({
+        next: (role) => {
+          if (this.editingRole) {
+            const index = this.allRoles.findIndex(r => r.id === this.editingRole!.id);
+            if (index !== -1) this.allRoles[index] = role;
+          } else {
+            this.allRoles.push(role);
+          }
+          this.applyRolesFilters();
+          this.cancelRoleForm();
+          this.roleSubmitting = false;
+        },
+        error: (error) => {
+          console.error('Error saving role:', error);
+          this.roleSubmitting = false;
+        }
+      });
+    }
+  }
+
+  cancelRoleForm() {
+    this.showRoleForm = false;
+    this.editingRole = null;
+    this.roleForm.reset();
+  }
+
+  deleteRole(role: Role) {
+    if (confirm(`Are you sure you want to delete ${role.role_name}?`)) {
+      this.usersService.deleteRole(role.id!).subscribe({
+        next: () => {
+          this.allRoles = this.allRoles.filter(r => r.id !== role.id);
+          this.applyRolesFilters();
+        },
+        error: (error) => {
+          console.error('Error deleting role:', error);
         }
       });
     }

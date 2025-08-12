@@ -111,6 +111,20 @@
                             Courses ({{ getCoursesCount() }})
                         </button>
                     </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" 
+                                [class.active]="activeTab === 'roles'"
+                                id="roles-tab" 
+                                data-bs-toggle="tab" 
+                                data-bs-target="#roles-panel" 
+                                type="button" 
+                                role="tab" 
+                                aria-controls="roles-panel" 
+                                [attr.aria-selected]="activeTab === 'roles'"
+                                (click)="setActiveTab('roles')">
+                            Roles ({{ getRolesCount() }})
+                        </button>
+                    </li>
                 </ul>
 
                 <!-- Tab Content -->
@@ -770,6 +784,130 @@
                                     <div *ngIf="filteredCourses.length === 0" class="text-center py-4">
                                         <h5 class="text-muted">No courses found</h5>
                                         <p class="text-muted">Start by adding your first course. Make sure you have levels and campuses created first.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Roles Tab Panel -->
+                <div class="tab-pane fade" 
+                     [class.show]="activeTab === 'roles'"
+                     [class.active]="activeTab === 'roles'"
+                     id="roles-panel" 
+                     role="tabpanel" 
+                     aria-labelledby="roles-tab">
+                    
+                    <div class="container-fluid py-4">
+                        <!-- Search and Add Button -->
+                        <div class="row mb-4">
+                            <div class="col-md-8">
+                                <input 
+                                    type="text" 
+                                    class="form-control" 
+                                    placeholder="Search roles..." 
+                                    [value]="rolesSearchTerm"
+                                    (input)="onRolesSearchChange($event)">
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-primary w-100" (click)="addNewRole()">
+                                    <i class="fas fa-plus me-1"></i>Add Role
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Add/Edit Role Form -->
+                        <div *ngIf="showRoleForm" class="card mb-4">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-user-tag me-2"></i>
+                                    {{ editingRole ? 'Edit Role' : 'Add New Role' }}
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <form [formGroup]="roleForm" (ngSubmit)="onRoleSubmit()">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <div class="mb-3">
+                                                <label for="roleName" class="form-label">Role Name *</label>
+                                                <input 
+                                                    type="text" 
+                                                    id="roleName"
+                                                    class="form-control" 
+                                                    formControlName="role_name"
+                                                    placeholder="Enter role name">
+                                                <div *ngIf="roleForm.get('role_name')?.invalid && roleForm.get('role_name')?.touched" 
+                                                     class="text-danger small mt-1">
+                                                    Role name is required
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 d-flex align-items-end">
+                                            <div class="btn-group w-100">
+                                                <button type="submit" 
+                                                        class="btn btn-info" 
+                                                        [disabled]="roleForm.invalid || roleSubmitting">
+                                                    <i class="fas fa-save me-1"></i>
+                                                    {{ editingRole ? 'Update' : 'Save' }}
+                                                </button>
+                                                <button type="button" 
+                                                        class="btn btn-secondary" 
+                                                        (click)="cancelRoleForm()">
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Roles Table -->
+                        <div class="card">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">
+                                    System Roles ({{ filteredRoles.length }})
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Role Name</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr *ngFor="let role of filteredRoles">
+                                                <td>{{ role.id }}</td>
+                                                <td>
+                                                    <strong>{{ role.role_name }}</strong>
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <button class="btn btn-outline-primary" 
+                                                                (click)="editRole(role)"
+                                                                title="Edit">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-danger" 
+                                                                (click)="deleteRole(role)"
+                                                                title="Delete">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <!-- No Roles Found -->
+                                    <div *ngIf="filteredRoles.length === 0" class="text-center py-4">
+                                        <h5 class="text-muted">No roles found</h5>
+                                        <p class="text-muted">Start by adding your first role to manage user permissions.</p>
                                     </div>
                                 </div>
                             </div>
