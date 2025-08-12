@@ -141,8 +141,7 @@
                             <div class="col-md-3">
                                 <select class="form-select" [value]="selectedUserRole" (change)="onUserRoleChange($event)">
                                     <option value="">All Roles</option>
-                                    <option value="admin">Admin</option>
-                                    <option value="super">Super</option>
+                                    <option *ngFor="let role of getUniqueUserRoles()" [value]="role">{{ role | titlecase }}</option>
                                 </select>
                             </div>
                             <div class="col-md-3">

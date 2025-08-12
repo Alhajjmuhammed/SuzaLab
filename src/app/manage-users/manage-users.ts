@@ -107,7 +107,6 @@ export class ManageUsers implements OnInit {
   }
 
   ngOnInit() {
-    console.log('🚀 Starting manage-users component');
     this.testApiConnection();
     this.loadUsersData();
     this.loadCampusesData();
@@ -133,13 +132,11 @@ export class ManageUsers implements OnInit {
   }
 
   private processCombinedData(data: {users: User[], students: Student[]}) {
-    console.log('Raw API Data:', data); // Debug log
     this.allUsers = [];
     this.allStudents = [];
 
     // Process regular users (admin/super)
     data.users.forEach(user => {
-      console.log('Processing user:', user); // Debug log
       
       // Handle role - it might be an object or string
       let roleName = 'user';
@@ -165,7 +162,6 @@ export class ManageUsers implements OnInit {
 
     // Process students (they also have user data)
     data.students.forEach(student => {
-      console.log('Processing student:', student); // Debug log
       const studentUser = student.user;
       
       // Handle role for student user
@@ -190,9 +186,6 @@ export class ManageUsers implements OnInit {
       });
     });
 
-    console.log('Processed users:', this.allUsers); // Debug log
-    console.log('Processed students:', this.allStudents); // Debug log
-
     this.applyUsersFilters();
     this.applyStudentsFilters();
   }
@@ -205,7 +198,11 @@ export class ManageUsers implements OnInit {
         user.username.toLowerCase().includes(this.usersSearchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(this.usersSearchTerm.toLowerCase());
 
-      const matchesRole = !this.selectedUserRole || user.role === this.selectedUserRole;
+      // Make role comparison case-insensitive and handle potential variations
+      const matchesRole = !this.selectedUserRole || 
+        user.role.toLowerCase() === this.selectedUserRole.toLowerCase() ||
+        user.role.toLowerCase().includes(this.selectedUserRole.toLowerCase());
+        
       const matchesStatus = !this.selectedUserStatus || user.status === this.selectedUserStatus;
 
       return matchesSearch && matchesRole && matchesStatus;
@@ -278,14 +275,18 @@ export class ManageUsers implements OnInit {
     return this.allStudents.length;
   }
 
+  // Get unique roles from actual user data
+  getUniqueUserRoles(): string[] {
+    const roles = this.allUsers.map(user => user.role);
+    return [...new Set(roles)].filter(role => role && role !== 'N/A').sort();
+  }
+
   // Action methods
   editUser(user: CombinedUserData) {
-    console.log('Edit user:', user);
     // TODO: Implement edit functionality
   }
 
   viewUser(user: CombinedUserData) {
-    console.log('View user:', user);
     // TODO: Implement view functionality
   }
 
@@ -331,11 +332,9 @@ export class ManageUsers implements OnInit {
         this.addNewCourse();
         break;
       case 'students':
-        console.log('Add new student');
         // TODO: Implement add student functionality
         break;
       default:
-        console.log('Add new user');
         // TODO: Implement add user functionality
         break;
     }
@@ -393,10 +392,9 @@ export class ManageUsers implements OnInit {
 
   // Check if API is reachable
   testApiConnection() {
-    console.log('Testing API connection to:', environment.apiBaseUrl);
     this.usersService.getUsers().subscribe({
       next: (users) => {
-        console.log('✅ Users API working. Response:', users);
+        // API connection successful
       },
       error: (error) => {
         console.error('❌ Users API error:', error);
@@ -405,7 +403,7 @@ export class ManageUsers implements OnInit {
 
     this.usersService.getStudents().subscribe({
       next: (students) => {
-        console.log('✅ Students API working. Response:', students);
+        // API connection successful
       },
       error: (error) => {
         console.error('❌ Students API error:', error);
@@ -521,8 +519,14 @@ export class ManageUsers implements OnInit {
   applyCoursesFilters() {
     this.filteredCourses = this.allCourses.filter(course => {
       const matchesSearch = course.course_name.toLowerCase().includes(this.coursesSearchTerm.toLowerCase());
-      const matchesLevel = !this.selectedCourseLevel || course.level_id?.toString() === this.selectedCourseLevel;
-      const matchesCampus = !this.selectedCourseCampus || course.campus_id?.toString() === this.selectedCourseCampus;
+      
+      // Handle both direct level_id and nested level.id
+      const courseLevelId = course.level_id || (course.level && course.level.id);
+      const matchesLevel = !this.selectedCourseLevel || courseLevelId?.toString() === this.selectedCourseLevel;
+      
+      // Handle both direct campus_id and nested campus.id
+      const courseCampusId = course.campus_id || (course.campus && course.campus.id);
+      const matchesCampus = !this.selectedCourseCampus || courseCampusId?.toString() === this.selectedCourseCampus;
       
       return matchesSearch && matchesLevel && matchesCampus;
     });
@@ -730,17 +734,27 @@ export class ManageUsers implements OnInit {
   // ==================== HELPER METHODS FOR COUNTS ====================
   
   getCampusCoursesCount(campusId: number): number {
-    return this.allCourses.filter(course => course.campus_id === campusId).length;
+    return this.allCourses.filter(course => {
+      // Handle both direct campus_id and nested campus.id
+      const coursesCampusId = course.campus_id || (course.campus && course.campus.id);
+      return coursesCampusId === campusId;
+    }).length;
   }
 
   getLevelCoursesCount(levelId: number): number {
-    return this.allCourses.filter(course => course.level_id === levelId).length;
+    return this.allCourses.filter(course => {
+      // Handle both direct level_id and nested level.id
+      const coursesLevelId = course.level_id || (course.level && course.level.id);
+      return coursesLevelId === levelId;
+    }).length;
   }
 
   getCourseStudentsCount(courseId: number): number {
     return this.allStudents.filter(student => {
       const originalStudent = student.originalData as Student;
-      return originalStudent.course_id === courseId;
+      // Handle both direct course_id and nested course.id
+      const studentsCourseId = originalStudent.course_id || (originalStudent.course && originalStudent.course.id);
+      return studentsCourseId === courseId;
     }).length;
   }
 }
