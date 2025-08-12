@@ -1,0 +1,213 @@
+    <!-- Toggle button for small screens -->
+    <button
+      class="btn btn-custom-toggle menu-toggle-btn d-block d-md-none"
+      (click)="toggleSidebar()"
+    >
+      <i class="fas fa-bars"></i> Menu
+    </button>
+
+    <!-- Mobile sidebar overlay -->
+    <div class="sidebar-overlay" (click)="closeSidebarOnMobile()"></div>
+
+    <div class="dashboard-wrapper">
+      <!-- Sidebar -->
+      <div class="sidebar" id="sidebar">
+        <nav class="nav flex-column">
+          <div class="logo">
+            <img src="suzalogo.jpeg" alt="SUZA Logo" />
+          </div>
+
+          <a class="nav-link" routerLink="/home" routerLinkActive="active">
+            <i class="fas fa-home"></i><span class="nav-name">Dashboard</span>
+          </a>
+          <a class="nav-link" routerLink="/components" routerLinkActive="active">
+            <i class="fas fa-microchip"></i
+            ><span class="nav-name">Components</span>
+          </a>
+          <a class="nav-link" routerLink="/programs" routerLinkActive="active">
+            <i class="fas fa-code"></i
+            ><span class="nav-name">Programs</span>
+          </a>
+          <a class="nav-link" routerLink="/courses" routerLinkActive="active">
+            <i class="fas fa-graduation-cap"></i
+            ><span class="nav-name">Courses</span>
+          </a>
+
+          <!-- Logout at Bottom -->
+          <a class="nav-link logout" (click)="logout()">
+            <i class="fas fa-sign-out-alt"></i
+            ><span class="nav-name">Logout</span>
+          </a>
+        </nav>
+      </div>
+
+      <div class="main-content" id="mainContent">
+        <!-- Topbar -->
+        <div class="topbar">
+          <button
+            class="btn d-none d-md-block"
+            (click)="toggleSidebar()"
+            style="background-color: #44b78b; color: white; border: none;"
+          >
+            <i class="fas fa-bars"></i>
+          </button>
+
+          <div class="input-group search-box ms-3">
+            <span class="input-group-text border-end-0">
+              <i class="fas fa-search text-muted"></i>
+            </span>
+            <input
+              type="text"
+              class="form-control border-start-0"
+              placeholder="Search"
+              aria-label="Search"
+            />
+          </div>
+
+          <h1 class="ms-3 text-white mb-0">SUZA Electro Lab</h1>
+
+          <div class="topbar-right ms-auto d-flex align-items-center gap-2">
+            <div class="user-info-container">
+              <div class="notification-icon" (click)="toggleProfilePanel()">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge">3</span>
+              </div>
+              <div class="user-dropdown">
+                <div class="user-info-box user-dropdown-toggle" #userDropdownToggle (click)="toggleUserDropdown($event)">
+                  <div class="user-details">
+                    <span class="user-name">{{ currentUser?.first_name || 'User' }} {{ currentUser?.last_name || '' }}</span>
+                    <span class="user-role">{{ currentUser?.role || 'User' }}</span>
+                  </div>
+                  <i class="fas fa-user-circle user-icon"></i>
+                  <i
+                    class="fas fa-chevron-down ms-2"
+                    style="font-size: 0.8rem"
+                  ></i>
+                </div>
+                <div class="user-dropdown-menu" #userDropdownMenu id="userDropdownMenu">
+                  <div class="user-dropdown-item company-name">
+                    SUZA Electro LaB
+                  </div>
+                  <div class="user-dropdown-divider"></div>
+                  <div class="user-dropdown-item user-details-full">
+                    <div><strong>{{ currentUser?.username || 'N/A' }}</strong></div>
+                    <div><small>{{ currentUser?.email || 'N/A' }}</small></div>
+                    <div><small>Role: {{ currentUser?.role || 'User' }}</small></div>
+                    <div *ngIf="currentUser?.user_type"><small>Type: {{ currentUser?.user_type }}</small></div>
+                  </div>
+                  <div class="user-dropdown-divider"></div>
+                  <a href="#" class="user-dropdown-item"
+                    ><i class="fas fa-user me-2"></i>Profile</a
+                  >
+                  <a href="#" class="user-dropdown-item"
+                    ><i class="fas fa-cog me-2"></i>Settings</a
+                  >
+                  <div class="user-dropdown-divider"></div>
+                  <a (click)="logout()" class="user-dropdown-item text-danger" style="cursor: pointer;"
+                    ><i class="fas fa-sign-out-alt me-2"></i>Logout</a
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content-area">
+          <!-- Router content will be displayed here -->
+          <div class="container-fluid px-2 pb-2">
+            <ng-content select=".mainContent"></ng-content>
+          </div>
+        </div>
+        <!-- End Main Content -->
+
+      </div>
+    </div>
+
+    <!-- Profile Sliding Panel -->
+    <div class="profile-sliding-panel" id="profilePanel">
+      <div class="panel-header">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h4 class="m-0">Activity Center</h4>
+          <button type="button" class="btn-close" id="closeProfilePanel" aria-label="Close"></button>
+        </div>
+        
+        <div class="user-info mb-4">
+          <div class="d-flex align-items-center">
+            <div class="user-profile-circle">
+              <i class="fas fa-user"></i>
+            </div>
+            <div class="ms-3">
+              <h5 class="mb-1">Your Name</h5>
+              <p class="mb-0 text-muted">Administrator</p>
+              <small class="text-muted">admin&#64;suzalab.com</small>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="panel-content">
+        <div class="notification-section-header">
+          <h5>Recent Notifications <span class="notification-count">3</span></h5>
+          <a href="#" class="clear-all-link" id="clearAllNotifications" (click)="clearAllNotifications($event)">
+            <i class="fas fa-trash-alt"></i>
+          </a>
+        </div>
+        
+        <div class="notification-list">
+          <div class="notification-item">
+            <div class="notification-icon bg-primary">
+              <i class="fas fa-microchip text-white"></i>
+            </div>
+            <div class="notification-content">
+              <p class="notification-text">New component added to inventory</p>
+              <small class="notification-time">2 hours ago</small>
+            </div>
+          </div>
+          <div class="notification-item">
+            <div class="notification-icon bg-success">
+              <i class="fas fa-check text-white"></i>
+            </div>
+            <div class="notification-content">
+              <p class="notification-text">Lab equipment calibration completed</p>
+              <small class="notification-time">Yesterday</small>
+            </div>
+          </div>
+          <div class="notification-item">
+            <div class="notification-icon bg-info">
+              <i class="fas fa-graduation-cap text-white"></i>
+            </div>
+            <div class="notification-content">
+              <p class="notification-text">5 new students enrolled in electronics course</p>
+              <small class="notification-time">3 days ago</small>
+            </div>
+          </div>
+        </div>
+        
+        <hr>
+        
+        <div class="quick-links">
+          <h5>Quick Access</h5>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item">
+              <a href="#"><i class="fas fa-user me-2"></i> View Profile</a>
+            </li>
+            <li class="list-group-item">
+              <a href="#"><i class="fas fa-cog me-2"></i> Account Settings</a>
+            </li>
+            <li class="list-group-item">
+              <a href="#"><i class="fas fa-microchip me-2"></i> Manage Components</a>
+            </li>
+            <li class="list-group-item">
+              <a href="#"><i class="fas fa-bell me-2"></i> Notification Preferences</a>
+            </li>
+            <li class="list-group-item">
+              <a href="#" class="text-danger"><i class="fas fa-sign-out-alt me-2"></i> Sign Out</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel Overlay -->
+    <div class="panel-overlay" id="panelOverlay"></div>
