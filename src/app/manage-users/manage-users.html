@@ -1,0 +1,785 @@
+<app-dashboard>
+    <div class="mainContent">
+        <!-- Professional Page Header -->
+        <div class="page-header">
+            <div class="breadcrumb-section">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a routerLink="/home"><i class="fas fa-home me-1"></i>Dashboard</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Users</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="content-area">
+            <!-- Header with Add Button -->
+            <div class="d-flex justify-content-end align-items-center mb-4">
+                <button class="btn btn-success" (click)="addNewUser()">
+                    <i class="fas fa-plus me-2"></i>{{ getAddButtonText() }}
+                </button>
+            </div>
+
+            <!-- Loading State -->
+            <div *ngIf="loading" class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading users data...</p>
+            </div>
+
+            <!-- Error State -->
+            <div *ngIf="error" class="alert alert-danger" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+                <button class="btn btn-sm btn-success ms-2" (click)="loadUsersData()">
+                    <i class="fas fa-redo me-1"></i>Retry
+                </button>
+            </div>
+
+            <!-- Main Content -->
+            <div *ngIf="!loading && !error">
+                <!-- Tabs Navigation -->
+                <ul class="nav nav-tabs mb-4" id="userTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" 
+                                [class.active]="activeTab === 'users'"
+                                id="users-tab" 
+                                data-bs-toggle="tab" 
+                                data-bs-target="#users-panel" 
+                                type="button" 
+                                role="tab" 
+                                aria-controls="users-panel" 
+                                [attr.aria-selected]="activeTab === 'users'"
+                                (click)="setActiveTab('users')">
+                            Users ({{ getUsersCount() }})
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" 
+                                [class.active]="activeTab === 'students'"
+                                id="students-tab" 
+                                data-bs-toggle="tab" 
+                                data-bs-target="#students-panel" 
+                                type="button" 
+                                role="tab" 
+                                aria-controls="students-panel" 
+                                [attr.aria-selected]="activeTab === 'students'"
+                                (click)="setActiveTab('students')">
+                            Students ({{ getStudentsCount() }})
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" 
+                                [class.active]="activeTab === 'campuses'"
+                                id="campuses-tab" 
+                                data-bs-toggle="tab" 
+                                data-bs-target="#campuses-panel" 
+                                type="button" 
+                                role="tab" 
+                                aria-controls="campuses-panel" 
+                                [attr.aria-selected]="activeTab === 'campuses'"
+                                (click)="setActiveTab('campuses')">
+                            Campuses ({{ getCampusesCount() }})
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" 
+                                [class.active]="activeTab === 'levels'"
+                                id="levels-tab" 
+                                data-bs-toggle="tab" 
+                                data-bs-target="#levels-panel" 
+                                type="button" 
+                                role="tab" 
+                                aria-controls="levels-panel" 
+                                [attr.aria-selected]="activeTab === 'levels'"
+                                (click)="setActiveTab('levels')">
+                            Levels ({{ getLevelsCount() }})
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" 
+                                [class.active]="activeTab === 'courses'"
+                                id="courses-tab" 
+                                data-bs-toggle="tab" 
+                                data-bs-target="#courses-panel" 
+                                type="button" 
+                                role="tab" 
+                                aria-controls="courses-panel" 
+                                [attr.aria-selected]="activeTab === 'courses'"
+                                (click)="setActiveTab('courses')">
+                            Courses ({{ getCoursesCount() }})
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="userTabsContent">
+                    <!-- Users Tab Panel -->
+                    <div class="tab-pane fade" 
+                         [class.show]="activeTab === 'users'"
+                         [class.active]="activeTab === 'users'"
+                         id="users-panel" 
+                         role="tabpanel" 
+                         aria-labelledby="users-tab">
+                        
+                        <!-- Users Search and Filter -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input 
+                                        type="text" 
+                                        class="form-control" 
+                                        placeholder="Search users..."
+                                        [value]="usersSearchTerm"
+                                        (input)="onUsersSearchChange($event)">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" [value]="selectedUserRole" (change)="onUserRoleChange($event)">
+                                    <option value="">All Roles</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="super">Super</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" [value]="selectedUserStatus" (change)="onUserStatusChange($event)">
+                                    <option value="">All Status</option>
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Users Table -->
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">
+                                    Admin Users ({{ filteredUsers.length }})
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Name</th>
+                                                <th>Username</th>
+                                                <th>Email</th>
+                                                <th>Role</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr *ngFor="let user of filteredUsers; let i = index">
+                                                <td>{{ i + 1 }}</td>
+                                                <td>
+                                                    <strong>{{ user.name || 'N/A' }}</strong>
+                                                </td>
+                                                <td>{{ user.username }}</td>
+                                                <td>
+                                                    <small>{{ user.email }}</small>
+                                                </td>
+                                                <td>
+                                                    <span [class]="getUserTypeBadgeClass(user)">
+                                                        {{ getUserTypeLabel(user) }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <button class="btn btn-outline-primary" 
+                                                                title="Edit" 
+                                                                (click)="editUser(user)">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-info" 
+                                                                title="View Details" 
+                                                                (click)="viewUser(user)">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-danger" 
+                                                                title="Delete" 
+                                                                (click)="deleteUser(user)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <!-- No Users Found -->
+                                    <div *ngIf="filteredUsers.length === 0" class="text-center py-4">
+                                        <h5 class="text-muted">No admin users found</h5>
+                                        <p class="text-muted">Try adjusting your search or filters.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Students Tab Panel -->
+                    <div class="tab-pane fade" 
+                         [class.show]="activeTab === 'students'"
+                         [class.active]="activeTab === 'students'"
+                         id="students-panel" 
+                         role="tabpanel" 
+                         aria-labelledby="students-tab">
+                        
+                        <!-- Students Search and Filter -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input 
+                                        type="text" 
+                                        class="form-control" 
+                                        placeholder="Search students..."
+                                        [value]="studentsSearchTerm"
+                                        (input)="onStudentsSearchChange($event)">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" [value]="selectedStudentStatus" (change)="onStudentStatusChange($event)">
+                                    <option value="">All Status</option>
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Students Table -->
+                        <div class="card">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">
+                                    Students ({{ filteredStudents.length }})
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Name</th>
+                                                <th>Username</th>
+                                                <th>Email</th>
+                                                <th>Course</th>
+                                                <th>Year</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr *ngFor="let student of filteredStudents; let i = index">
+                                                <td>{{ i + 1 }}</td>
+                                                <td>
+                                                    <strong>{{ student.name || 'N/A' }}</strong>
+                                                </td>
+                                                <td>{{ student.username }}</td>
+                                                <td>
+                                                    <small>{{ student.email }}</small>
+                                                </td>
+                                                <td>
+                                                    <small>{{ getCourseName(student) }}</small>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-secondary">
+                                                        Year {{ getYearOfStudy(student) }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <button class="btn btn-outline-primary" 
+                                                                title="Edit" 
+                                                                (click)="editUser(student)">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-info" 
+                                                                title="View Details" 
+                                                                (click)="viewUser(student)">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-danger" 
+                                                                title="Delete" 
+                                                                (click)="deleteUser(student)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <!-- No Students Found -->
+                                    <div *ngIf="filteredStudents.length === 0" class="text-center py-4">
+                                        <h5 class="text-muted">No students found</h5>
+                                        <p class="text-muted">Try adjusting your search or filters.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campuses Tab Panel -->
+                    <div class="tab-pane fade" 
+                         [class.show]="activeTab === 'campuses'"
+                         [class.active]="activeTab === 'campuses'"
+                         id="campuses-panel" 
+                         role="tabpanel" 
+                         aria-labelledby="campuses-tab">
+                        
+                        <!-- Campuses Search and Filter -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input 
+                                        type="text" 
+                                        class="form-control" 
+                                        placeholder="Search campuses..."
+                                        [value]="campusesSearchTerm"
+                                        (input)="onCampusesSearchChange($event)">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <button class="btn btn-primary w-100" (click)="addNewCampus()">
+                                    <i class="fas fa-plus me-1"></i>Add Campus
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Campus Form (when adding/editing) -->
+                        <div *ngIf="showCampusForm" class="card mb-4">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-university me-2"></i>
+                                    {{ editingCampus ? 'Edit Campus' : 'Add New Campus' }}
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <form [formGroup]="campusForm" (ngSubmit)="onCampusSubmit()">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <div class="mb-3">
+                                                <label for="campusName" class="form-label">Campus Name *</label>
+                                                <input 
+                                                    type="text" 
+                                                    id="campusName"
+                                                    class="form-control" 
+                                                    formControlName="campus_name"
+                                                    placeholder="Enter campus name">
+                                                <div *ngIf="campusForm.get('campus_name')?.invalid && campusForm.get('campus_name')?.touched" 
+                                                     class="text-danger small mt-1">
+                                                    Campus name is required
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 d-flex align-items-end">
+                                            <div class="btn-group w-100">
+                                                <button type="submit" 
+                                                        class="btn btn-success" 
+                                                        [disabled]="campusForm.invalid || campusSubmitting">
+                                                    <i class="fas fa-save me-1"></i>
+                                                    {{ editingCampus ? 'Update' : 'Save' }}
+                                                </button>
+                                                <button type="button" 
+                                                        class="btn btn-secondary" 
+                                                        (click)="cancelCampusForm()">
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Campuses Table -->
+                        <div class="card">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">
+                                    Campuses ({{ filteredCampuses.length }})
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Campus Name</th>
+                                                <th>Courses Count</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr *ngFor="let campus of filteredCampuses; let i = index">
+                                                <td>{{ i + 1 }}</td>
+                                                <td>
+                                                    <strong>{{ campus.campus_name }}</strong>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-info">
+                                                        {{ getCampusCoursesCount(campus.id!) }} courses
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <button class="btn btn-outline-primary" 
+                                                                title="Edit" 
+                                                                (click)="editCampus(campus)">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-danger" 
+                                                                title="Delete" 
+                                                                (click)="deleteCampus(campus)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <!-- No Campuses Found -->
+                                    <div *ngIf="filteredCampuses.length === 0" class="text-center py-4">
+                                        <h5 class="text-muted">No campuses found</h5>
+                                        <p class="text-muted">Start by adding your first campus.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Levels Tab Panel -->
+                    <div class="tab-pane fade" 
+                         [class.show]="activeTab === 'levels'"
+                         [class.active]="activeTab === 'levels'"
+                         id="levels-panel" 
+                         role="tabpanel" 
+                         aria-labelledby="levels-tab">
+                        
+                        <!-- Levels Search and Filter -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input 
+                                        type="text" 
+                                        class="form-control" 
+                                        placeholder="Search levels..."
+                                        [value]="levelsSearchTerm"
+                                        (input)="onLevelsSearchChange($event)">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <button class="btn btn-primary w-100" (click)="addNewLevel()">
+                                    <i class="fas fa-plus me-1"></i>Add Level
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Level Form (when adding/editing) -->
+                        <div *ngIf="showLevelForm" class="card mb-4">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-layer-group me-2"></i>
+                                    {{ editingLevel ? 'Edit Level' : 'Add New Level' }}
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <form [formGroup]="levelForm" (ngSubmit)="onLevelSubmit()">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <div class="mb-3">
+                                                <label for="levelName" class="form-label">Level Name *</label>
+                                                <input 
+                                                    type="text" 
+                                                    id="levelName"
+                                                    class="form-control" 
+                                                    formControlName="level_name"
+                                                    placeholder="e.g., Certificate, Diploma, Degree">
+                                                <div *ngIf="levelForm.get('level_name')?.invalid && levelForm.get('level_name')?.touched" 
+                                                     class="text-danger small mt-1">
+                                                    Level name is required
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 d-flex align-items-end">
+                                            <div class="btn-group w-100">
+                                                <button type="submit" 
+                                                        class="btn btn-warning" 
+                                                        [disabled]="levelForm.invalid || levelSubmitting">
+                                                    <i class="fas fa-save me-1"></i>
+                                                    {{ editingLevel ? 'Update' : 'Save' }}
+                                                </button>
+                                                <button type="button" 
+                                                        class="btn btn-secondary" 
+                                                        (click)="cancelLevelForm()">
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Levels Table -->
+                        <div class="card">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0">
+                                    Academic Levels ({{ filteredLevels.length }})
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Level Name</th>
+                                                <th>Courses Count</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr *ngFor="let level of filteredLevels; let i = index">
+                                                <td>{{ i + 1 }}</td>
+                                                <td>
+                                                    <strong>{{ level.level_name }}</strong>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-info">
+                                                        {{ getLevelCoursesCount(level.id!) }} courses
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <button class="btn btn-outline-primary" 
+                                                                title="Edit" 
+                                                                (click)="editLevel(level)">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-danger" 
+                                                                title="Delete" 
+                                                                (click)="deleteLevel(level)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <!-- No Levels Found -->
+                                    <div *ngIf="filteredLevels.length === 0" class="text-center py-4">
+                                        <h5 class="text-muted">No levels found</h5>
+                                        <p class="text-muted">Start by adding academic levels like Certificate, Diploma, or Degree.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Courses Tab Panel -->
+                    <div class="tab-pane fade" 
+                         [class.show]="activeTab === 'courses'"
+                         [class.active]="activeTab === 'courses'"
+                         id="courses-panel" 
+                         role="tabpanel" 
+                         aria-labelledby="courses-tab">
+                        
+                        <!-- Courses Search and Filter -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input 
+                                        type="text" 
+                                        class="form-control" 
+                                        placeholder="Search courses..."
+                                        [value]="coursesSearchTerm"
+                                        (input)="onCoursesSearchChange($event)">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-select" [value]="selectedCourseLevel" (change)="onCourseLevelChange($event)">
+                                    <option value="">All Levels</option>
+                                    <option *ngFor="let level of allLevels" [value]="level.id">{{ level.level_name }}</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-select" [value]="selectedCourseCampus" (change)="onCourseCampusChange($event)">
+                                    <option value="">All Campuses</option>
+                                    <option *ngFor="let campus of allCampuses" [value]="campus.id">{{ campus.campus_name }}</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-primary w-100" (click)="addNewCourse()">
+                                    <i class="fas fa-plus me-1"></i>Add Course
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Course Form (when adding/editing) -->
+                        <div *ngIf="showCourseForm" class="card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-graduation-cap me-2"></i>
+                                    {{ editingCourse ? 'Edit Course' : 'Add New Course' }}
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <form [formGroup]="courseForm" (ngSubmit)="onCourseSubmit()">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="courseName" class="form-label">Course Name *</label>
+                                                <input 
+                                                    type="text" 
+                                                    id="courseName"
+                                                    class="form-control" 
+                                                    formControlName="course_name"
+                                                    placeholder="Enter course name">
+                                                <div *ngIf="courseForm.get('course_name')?.invalid && courseForm.get('course_name')?.touched" 
+                                                     class="text-danger small mt-1">
+                                                    Course name is required
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="mb-3">
+                                                <label for="courseLevel" class="form-label">Level *</label>
+                                                <select id="courseLevel" class="form-select" formControlName="level_id">
+                                                    <option value="">Select Level</option>
+                                                    <option *ngFor="let level of allLevels" [value]="level.id">{{ level.level_name }}</option>
+                                                </select>
+                                                <div *ngIf="courseForm.get('level_id')?.invalid && courseForm.get('level_id')?.touched" 
+                                                     class="text-danger small mt-1">
+                                                    Level is required
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="mb-3">
+                                                <label for="courseCampus" class="form-label">Campus *</label>
+                                                <select id="courseCampus" class="form-select" formControlName="campus_id">
+                                                    <option value="">Select Campus</option>
+                                                    <option *ngFor="let campus of allCampuses" [value]="campus.id">{{ campus.campus_name }}</option>
+                                                </select>
+                                                <div *ngIf="courseForm.get('campus_id')?.invalid && courseForm.get('campus_id')?.touched" 
+                                                     class="text-danger small mt-1">
+                                                    Campus is required
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="btn-group">
+                                                <button type="submit" 
+                                                        class="btn btn-primary" 
+                                                        [disabled]="courseForm.invalid || courseSubmitting">
+                                                    <i class="fas fa-save me-1"></i>
+                                                    {{ editingCourse ? 'Update' : 'Save' }}
+                                                </button>
+                                                <button type="button" 
+                                                        class="btn btn-secondary" 
+                                                        (click)="cancelCourseForm()">
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Courses Table -->
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">
+                                    Academic Courses ({{ filteredCourses.length }})
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Course Name</th>
+                                                <th>Level</th>
+                                                <th>Campus</th>
+                                                <th>Students Count</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr *ngFor="let course of filteredCourses; let i = index">
+                                                <td>{{ i + 1 }}</td>
+                                                <td>
+                                                    <strong>{{ course.course_name }}</strong>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-warning">
+                                                        {{ course.level.level_name }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-success">
+                                                        {{ course.campus.campus_name }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-info">
+                                                        {{ getCourseStudentsCount(course.id!) }} students
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <button class="btn btn-outline-primary" 
+                                                                title="Edit" 
+                                                                (click)="editCourse(course)">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-danger" 
+                                                                title="Delete" 
+                                                                (click)="deleteCourse(course)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <!-- No Courses Found -->
+                                    <div *ngIf="filteredCourses.length === 0" class="text-center py-4">
+                                        <h5 class="text-muted">No courses found</h5>
+                                        <p class="text-muted">Start by adding your first course. Make sure you have levels and campuses created first.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Content -->
+    </div>
+</app-dashboard>
+

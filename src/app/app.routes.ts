@@ -7,11 +7,13 @@ import { Programs } from './programs/programs';
 import { Courses } from './courses/courses';
 import { Dashboard } from './dashboard/dashboard';
 import { AuthGuard } from './guards/auth.guard';
+import { ManageUsers } from './manage-users/manage-users';
 
 export const routes: Routes = [
     { path: '', component: Login },
     { path: 'login', component: Login },
     { path: 'home', component: Home, canActivate: [AuthGuard] },
+    { path: 'manage-users', component: ManageUsers, canActivate: [AuthGuard] },
     { path: 'dashboard', component: Dashboard, canActivate: [AuthGuard] },
     { path: 'components', component: Components, canActivate: [AuthGuard] },
     { path: 'programs', component: Programs, canActivate: [AuthGuard] },
