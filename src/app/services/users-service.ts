@@ -84,15 +84,18 @@ export class UsersService {
   }
 
   private getHeaders(): HttpHeaders {
-    let token: string | null = null;
+    // Build headers and only include Authorization when a token exists.
+    let headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+
     if (this.isBrowser) {
-      token = localStorage.getItem('access_token');
+      // Try a few common localStorage keys for the token to be robust.
+      const token = localStorage.getItem('access_token') || localStorage.getItem('token') || localStorage.getItem('auth_token');
+      if (token) {
+        headers = headers.set('Authorization', `Bearer ${token}`);
+      }
     }
 
-    return new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Authorization': token ? `Bearer ${token}` : ''
-    });
+    return headers;
   }
 
   private handleError(error: any): Observable<never> {
@@ -142,7 +145,7 @@ export class UsersService {
    * Update user
    */
   updateUser(id: number, user: Partial<User>): Observable<User> {
-    return this.http.put<User>(`${this.apiUrl}/users/${id}/`, user, {
+  return this.http.patch<User>(`${this.apiUrl}/users/${id}/`, user, {
       headers: this.getHeaders()
     }).pipe(
       timeout(3000),
@@ -204,7 +207,7 @@ export class UsersService {
    * Update student
    */
   updateStudent(id: number, student: Partial<Student>): Observable<Student> {
-    return this.http.put<Student>(`${this.apiUrl}/students/${id}/`, student, {
+  return this.http.patch<Student>(`${this.apiUrl}/students/${id}/`, student, {
       headers: this.getHeaders()
     }).pipe(
       timeout(3000),
@@ -292,7 +295,7 @@ export class UsersService {
    * Update campus
    */
   updateCampus(id: number, campus: Partial<Campus>): Observable<Campus> {
-    return this.http.put<Campus>(`${this.apiUrl}/students/campus/${id}/`, campus, {
+  return this.http.patch<Campus>(`${this.apiUrl}/students/campus/${id}/`, campus, {
       headers: this.getHeaders()
     }).pipe(
       timeout(3000),
@@ -342,7 +345,7 @@ export class UsersService {
    * Update level
    */
   updateLevel(id: number, level: Partial<Level>): Observable<Level> {
-    return this.http.put<Level>(`${this.apiUrl}/students/level/${id}/`, level, {
+  return this.http.patch<Level>(`${this.apiUrl}/students/level/${id}/`, level, {
       headers: this.getHeaders()
     }).pipe(
       timeout(3000),
@@ -380,7 +383,7 @@ export class UsersService {
    * Update course
    */
   updateCourse(id: number, course: Partial<Course>): Observable<Course> {
-    return this.http.put<Course>(`${this.apiUrl}/students/course/${id}/`, course, {
+  return this.http.patch<Course>(`${this.apiUrl}/students/course/${id}/`, course, {
       headers: this.getHeaders()
     }).pipe(
       timeout(3000),
@@ -443,7 +446,12 @@ export class UsersService {
   // ==================== ROLE CRUD METHODS ====================
   
   getRoles(): Observable<Role[]> {
-    return this.http.get<Role[]>(`${this.apiUrl}/roles/`);
+    return this.http.get<Role[]>(`${this.apiUrl}/roles/`, {
+      headers: this.getHeaders()
+    }).pipe(
+      timeout(3000),
+      catchError(this.handleError)
+    );
   }
 
   createRole(role: Partial<Role>): Observable<Role> {
@@ -453,7 +461,7 @@ export class UsersService {
   }
 
   updateRole(id: number, role: Partial<Role>): Observable<Role> {
-    return this.http.put<Role>(`${this.apiUrl}/roles/${id}/`, role, {
+  return this.http.patch<Role>(`${this.apiUrl}/roles/${id}/`, role, {
       headers: this.getHeaders()
     });
   }
