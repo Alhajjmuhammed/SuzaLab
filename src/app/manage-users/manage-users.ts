@@ -143,6 +143,17 @@ export class ManageUsers implements OnInit {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
 
+  // Format date to DD/MM/YYYY for display purposes
+  formatToDMY(value?: string | Date | null): string {
+    if (!value) return '';
+    const d = (typeof value === 'string') ? new Date(value) : value as Date;
+    if (!d || isNaN(d.getTime())) return '';
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
   // Courses available for the student form (filtered by selected campus/level)
   studentCourses: Course[] = [];
   // Levels available for the student form filtered by selected campus
@@ -233,10 +244,16 @@ export class ManageUsers implements OnInit {
   this.editingUser = user;
   this.showUserForm = true;
   this.showUserView = false;
+  // Disable username and email fields in edit mode
+  setTimeout(() => {
+    this.userForm.get('username')?.disable();
+    this.userForm.get('email')?.disable();
+  }, 0);
   const orig = user.originalData || {};
   // Clear password when editing so we don't accidentally send default password on update
-  // Patch basic user fields
-  this.userForm.patchValue({ username: orig.username || '', email: orig.email || '', first_name: orig.first_name || '', middle_name: orig.middle_name || '', last_name: orig.last_name || '', address: orig.address || '', phone_number: orig.phone_number || '', password: '', role_id: (orig.role && orig.role.id) ? orig.role.id : (orig.role_id || '') });
+  // Patch basic user fields (handle case where orig may be a Student with nested user)
+  const sourceUser = (orig && (orig as any).user) ? (orig as any).user : orig;
+  this.userForm.patchValue({ username: sourceUser?.username || '', email: sourceUser?.email || '', first_name: sourceUser?.first_name || '', middle_name: sourceUser?.middle_name || '', last_name: sourceUser?.last_name || '', address: sourceUser?.address || '', phone_number: sourceUser?.phone_number || '', password: '', role_id: (orig.role && orig.role.id) ? orig.role.id : (orig.role_id || '') });
 
   // If editing a student, patch student-specific fields and preload course options
   if (user.type === 'student') {
@@ -244,6 +261,21 @@ export class ManageUsers implements OnInit {
     const studentId = (orig && (orig as any).id) ? (orig as any).id : (user.id || null);
     if (studentId) {
       this.usersService.getStudent(Number(studentId)).subscribe({ next: (student) => {
+        // populate top-level user fields from fetched student
+        this.userForm.patchValue({
+          username: student.user?.username || '',
+          email: student.user?.email || '',
+          first_name: student.user?.first_name || '',
+          middle_name: (student.user as any)?.middle_name || '',
+          last_name: student.user?.last_name || '',
+          address: student.user && student.user.address != null ? student.user.address : 'N/A',
+          phone_number: student.user && student.user.phone_number != null ? student.user.phone_number : 'N/A',
+          password: ''
+        });
+        // update editingUser.originalData so submit uses freshest object
+        if (this.editingUser) {
+          this.editingUser = { ...this.editingUser, originalData: student, name: `${student.user?.first_name || ''} ${student.user?.last_name || ''}`.trim(), username: student.user?.username || this.editingUser.username, email: student.user?.email || this.editingUser.email };
+        }
         const courseObj = (student.course || (student as any).course) as any;
         const campusId = courseObj && courseObj.campus ? courseObj.campus.id : (student as any).course_id || '';
         const levelId = courseObj && courseObj.level ? courseObj.level.id : '';
@@ -267,11 +299,27 @@ export class ManageUsers implements OnInit {
         console.error('Failed to fetch student for edit', e);
         // fallback to whatever we had locally
         const studentOrig = orig as Student;
+        const studentUserSrc = (studentOrig && (studentOrig as any).user) ? (studentOrig as any).user : (studentOrig as any);
         const courseObj2 = (studentOrig.course || (studentOrig as any).course) as any;
         const campusId2 = courseObj2 && courseObj2.campus ? courseObj2.campus.id : (studentOrig as any).course_id || '';
         const levelId2 = courseObj2 && courseObj2.level ? courseObj2.level.id : '';
-        const formattedDob2 = this.formatToYMD(studentOrig.date_of_birth) || '';
-        this.userForm.patchValue({ campus_id: campusId2 || '', level_id: levelId2 || '', course_id: (studentOrig.course && studentOrig.course.id) ? studentOrig.course.id : (studentOrig as any).course_id || '', date_of_birth: formattedDob2, gender: studentOrig.gender || 'M', year_of_study: studentOrig.year_of_study || 1, nationality: studentOrig.nationality || '' });
+        const formattedDob2 = this.formatToYMD((studentOrig as any).date_of_birth) || '';
+        this.userForm.patchValue({
+          username: studentUserSrc?.username || '',
+          email: studentUserSrc?.email || '',
+          first_name: studentUserSrc?.first_name || '',
+          middle_name: studentUserSrc?.middle_name || '',
+          last_name: studentUserSrc?.last_name || '',
+          address: studentUserSrc?.address || '',
+          phone_number: studentUserSrc?.phone_number || '',
+          campus_id: campusId2 || '',
+          level_id: levelId2 || '',
+          course_id: (studentOrig.course && studentOrig.course.id) ? studentOrig.course.id : (studentOrig as any).course_id || '',
+          date_of_birth: formattedDob2,
+          gender: studentOrig.gender || 'M',
+          year_of_study: studentOrig.year_of_study || 1,
+          nationality: studentOrig.nationality || ''
+        });
         this.userForm.get('date_of_birth')?.setValidators([Validators.required, this.dobNotInFuture.bind(this), this.dobMaxAge100.bind(this)]);
         this.userForm.get('date_of_birth')?.enable();
         this.userForm.get('date_of_birth')?.updateValueAndValidity();
@@ -338,7 +386,8 @@ export class ManageUsers implements OnInit {
 
   onUserSubmit() {
     // Use getRawValue() to include disabled controls (course_id/level_id may be disabled by FormControl)
-    const raw = this.userForm.getRawValue();
+  // Use getRawValue() to include disabled controls
+  const raw = this.userForm.getRawValue();
     if (!this.userForm.valid && this.activeTab !== 'students') return;
     const form = raw;
     const payload: any = { username: form.username, email: form.email, first_name: form.first_name, middle_name: form.middle_name, last_name: form.last_name, address: form.address, phone_number: form.phone_number };
@@ -351,28 +400,53 @@ export class ManageUsers implements OnInit {
 
   if (this.editingUser) {
       if (this.editingUser.type === 'student') {
-  const orig = this.editingUser.originalData as Student;
-  // Build nested payload accepted by StudentSerializer: { user: {...}, date_of_birth, gender, course_id, year_of_study, nationality }
-  const studentPayload: any = {
-    user: {
-      username: form.username,
-      email: form.email,
-      first_name: form.first_name,
-      middle_name: form.middle_name,
-      last_name: form.last_name
-    }
-  };
-  if (form.password) studentPayload.user.password = form.password; // optional: set only if provided
-  if (form.date_of_birth) {
-    const formatted = this.formatToYMD(form.date_of_birth) || form.date_of_birth;
-    studentPayload.date_of_birth = formatted;
-  }
-  if (form.gender) studentPayload.gender = form.gender;
-  if (form.course_id) studentPayload.course_id = form.course_id;
-  if (form.year_of_study) studentPayload.year_of_study = form.year_of_study;
-  if (form.nationality) studentPayload.nationality = form.nationality;
+        // Only send updatable user fields
+        const orig = this.editingUser.originalData as Student;
+        const studentPayload: any = {
+          user: {
+            first_name: form.first_name,
+            middle_name: form.middle_name,
+            last_name: form.last_name,
+            address: form.address === 'N/A' ? null : form.address,
+            phone_number: form.phone_number === 'N/A' ? null : form.phone_number
+          }
+        };
+        // include existing user id when updating so backend can reconcile nested updates
+        try { const o = orig as any; if (o && o.user && o.user.id) studentPayload.user.id = o.user.id; } catch (_) {}
+        if (form.date_of_birth) {
+          const formatted = this.formatToYMD(form.date_of_birth) || form.date_of_birth;
+          studentPayload.date_of_birth = formatted;
+        }
+        if (form.gender) studentPayload.gender = form.gender;
+        if (form.course_id) studentPayload.course_id = form.course_id;
+        if (form.year_of_study) studentPayload.year_of_study = form.year_of_study;
+        if (form.nationality) studentPayload.nationality = form.nationality;
 
-  this.usersService.updateStudent(orig.id!, studentPayload).subscribe({ next: (updated) => { const idx = this.allStudents.findIndex(s => s.id === this.editingUser!.id); if (idx !== -1) { this.allStudents[idx] = { ...this.allStudents[idx], name: `${updated.user?.first_name || studentPayload.user.first_name || ''} ${updated.user?.last_name || studentPayload.user.last_name || ''}`.trim() || this.allStudents[idx].name, email: updated.user?.email || studentPayload.user.email || this.allStudents[idx].email, username: updated.user?.username || studentPayload.user.username || this.allStudents[idx].username, additionalInfo: updated.course ? `${updated.course.course_name} - Year ${updated.year_of_study}` : this.allStudents[idx].additionalInfo, originalData: { ...this.allStudents[idx].originalData, ...updated } }; this.applyStudentsFilters(); } this.showUserForm = false; this.loading = false; }, error: (e) => { console.error('Update student error', e); this.error = e?.error || 'Update student failed'; this.loading = false; } });
+        console.log('PATCH payload:', studentPayload);
+        this.usersService.updateStudent(orig.id!, studentPayload).subscribe({
+          next: (updated) => {
+            const idx = this.allStudents.findIndex(s => s.id === this.editingUser!.id);
+            if (idx !== -1) {
+              this.allStudents[idx] = {
+                ...this.allStudents[idx],
+                name: `${updated.user?.first_name || studentPayload.user.first_name || ''} ${updated.user?.last_name || studentPayload.user.last_name || ''}`.trim() || this.allStudents[idx].name,
+                email: updated.user?.email || this.allStudents[idx].email,
+                username: updated.user?.username || this.allStudents[idx].username,
+                additionalInfo: updated.course ? `${updated.course.course_name} - Year ${updated.year_of_study}` : this.allStudents[idx].additionalInfo,
+                originalData: { ...this.allStudents[idx].originalData, ...updated }
+              };
+              this.applyStudentsFilters();
+            }
+            this.showUserForm = false;
+            this.loading = false;
+          },
+          error: (e) => {
+            console.error('Update student error', e);
+            console.error('Backend details:', e?.error);
+            this.error = e?.error || 'Update student failed';
+            this.loading = false;
+          }
+        });
       } else {
   const orig = this.editingUser.originalData as User;
   // If role_id is provided, send as role_id to backend

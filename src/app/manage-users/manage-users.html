@@ -166,11 +166,11 @@
                                 <div class="row">
                                     <div class="col-md-4 mb-3">
                                         <label class="form-label">Username *</label>
-                                        <input class="form-control" formControlName="username" />
+                                        <input class="form-control" formControlName="username" [readonly]="editingUser" />
                                     </div>
                                     <div class="col-md-4 mb-3">
                                         <label class="form-label">Email *</label>
-                                        <input class="form-control" formControlName="email" />
+                                        <input class="form-control" formControlName="email" [readonly]="editingUser" />
                                     </div>
                                     <div class="col-md-4 mb-3" *ngIf="activeTab !== 'students'">
                                         <label class="form-label">Role</label>
@@ -231,6 +231,7 @@
                                             <div *ngIf="userForm.get('date_of_birth')?.errors?.['futureDate']">Date of birth cannot be in the future</div>
                                             <div *ngIf="userForm.get('date_of_birth')?.errors?.['tooOld']">Age cannot be greater than 100 years</div>
                                         </div>
+                                        <div *ngIf="userForm.get('date_of_birth')?.value && !(userForm.get('date_of_birth')?.invalid)" class="form-text mt-1">Displayed: {{ formatToDMY(userForm.get('date_of_birth')?.value) }}</div>
                                     </div>
                                     <div class="col-md-4 mb-3">
                                         <label class="form-label">Gender</label>
