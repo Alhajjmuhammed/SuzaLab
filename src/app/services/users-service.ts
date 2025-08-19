@@ -63,7 +63,6 @@ export interface CreateStudentRequest {
     first_name: string;
     last_name: string;
     password: string;
-    role: string;
   };
   date_of_birth: string;
   gender: 'M' | 'F';

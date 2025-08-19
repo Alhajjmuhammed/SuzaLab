@@ -172,11 +172,71 @@
                                         <label class="form-label">Email *</label>
                                         <input class="form-control" formControlName="email" />
                                     </div>
-                                    <div class="col-md-4 mb-3">
+                                    <div class="col-md-4 mb-3" *ngIf="activeTab !== 'students'">
                                         <label class="form-label">Role</label>
                                         <select class="form-select" formControlName="role_id">
                                             <option value="">Select role</option>
                                             <option *ngFor="let r of allRoles" [value]="r.id">{{ r.role_name }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <!-- Student-specific fields (visible when creating/editing students) -->
+                                <div *ngIf="activeTab === 'students'" class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">Campus</label>
+                                        <select class="form-select" formControlName="campus_id" (change)="onStudentCampusChange($event)">
+                                            <option value="">Select campus</option>
+                                            <option *ngFor="let campus of allCampuses" [value]="campus.id">{{ campus.campus_name }}</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">Level</label>
+                                        <select class="form-select" formControlName="level_id" (change)="onStudentLevelChange($event)">
+                                            <option value="">Select level</option>
+                                            <option *ngFor="let lvl of studentLevels" [value]="lvl.id">{{ lvl.level_name }}</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">Course</label>
+                                        <select class="form-select" formControlName="course_id">
+                                            <option value="">Select course</option>
+                                            <option *ngFor="let c of studentCourses" [value]="c.id">{{ c.course_name }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div *ngIf="activeTab === 'students'" class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">Year of study</label>
+                                        <input type="number" min="1" max="10" class="form-control" formControlName="year_of_study" />
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">Nationality</label>
+                                        <input class="form-control" formControlName="nationality" />
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">Password</label>
+                                        <input type="text" class="form-control" formControlName="password" />
+                                        <div class="form-text">Default: 12345678 (change if needed)</div>
+                                    </div>
+                                </div>
+
+                                <!-- Date of birth and gender for students -->
+                                <div *ngIf="activeTab === 'students'" class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">Date of birth *</label>
+                                        <input type="date" class="form-control" formControlName="date_of_birth" />
+                                        <div *ngIf="userForm.get('date_of_birth')?.touched && userForm.get('date_of_birth')?.invalid" class="text-danger small mt-1">
+                                            <div *ngIf="userForm.get('date_of_birth')?.errors?.['required']">Date of birth is required</div>
+                                            <div *ngIf="userForm.get('date_of_birth')?.errors?.['invalidDate']">Invalid date</div>
+                                            <div *ngIf="userForm.get('date_of_birth')?.errors?.['futureDate']">Date of birth cannot be in the future</div>
+                                            <div *ngIf="userForm.get('date_of_birth')?.errors?.['tooOld']">Age cannot be greater than 100 years</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">Gender</label>
+                                        <select class="form-select" formControlName="gender">
+                                            <option value="M">Male</option>
+                                            <option value="F">Female</option>
                                         </select>
                                     </div>
                                 </div>
@@ -222,25 +282,14 @@
                         <!-- Users Search and Filter -->
                         <div class="row mb-4">
                             <div class="col-md-6">
+                                <label class="form-label">Search</label>
                                 <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-search"></i>
-                                    </span>
-                                    <input 
-                                        type="text" 
-                                        class="form-control" 
-                                        placeholder="Search users..."
-                                        [value]="usersSearchTerm"
-                                        (input)="onUsersSearchChange($event)">
+                                    <input type="text" class="form-control" placeholder="Search users..." />
+                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <select class="form-select" [value]="selectedUserRole" (change)="onUserRoleChange($event)">
-                                    <option value="">All Roles</option>
-                                    <option *ngFor="let role of getUniqueUserRoles()" [value]="role">{{ role | titlecase }}</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
+                                <label class="form-label">Status</label>
                                 <select class="form-select" [value]="selectedUserStatus" (change)="onUserStatusChange($event)">
                                     <option value="">All Status</option>
                                     <option value="Active">Active</option>
