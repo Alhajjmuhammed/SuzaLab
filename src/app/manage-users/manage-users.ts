@@ -23,7 +23,7 @@ interface CombinedUserData {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, Dashboard],
   templateUrl: './manage-users.html',
-  styleUrl: './manage-users.css'
+  styleUrls: ['./manage-users.css']
 })
 export class ManageUsers implements OnInit {
   // Active tab tracking

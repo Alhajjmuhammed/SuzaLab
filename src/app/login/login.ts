@@ -9,7 +9,7 @@ import { Auth } from '../services/auth';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './login.html',
-  styleUrl: './login.css'
+  styleUrls: ['./login.css']
 })
 export class Login implements OnInit {
   isLoading = false;

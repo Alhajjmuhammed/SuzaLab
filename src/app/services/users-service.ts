@@ -1,8 +1,9 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { isPlatformBrowser } from '@angular/common';
 
 // Interfaces for your backend models
 export interface User {
@@ -76,11 +77,18 @@ export interface CreateStudentRequest {
 })
 export class UsersService {
   private apiUrl = environment.apiBaseUrl;
+  private isBrowser: boolean;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, @Inject(PLATFORM_ID) private platformId: Object) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+  }
 
   private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('access_token');
+    let token: string | null = null;
+    if (this.isBrowser) {
+      token = localStorage.getItem('access_token');
+    }
+
     return new HttpHeaders({
       'Content-Type': 'application/json',
       'Authorization': token ? `Bearer ${token}` : ''

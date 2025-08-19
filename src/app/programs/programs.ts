@@ -7,7 +7,7 @@ import { Dashboard } from '../dashboard/dashboard';
   standalone: true,
   imports: [Dashboard, CommonModule],
   templateUrl: './programs.html',
-  styleUrl: './programs.css'
+  styleUrls: ['./programs.css']
 })
 export class Programs {
 

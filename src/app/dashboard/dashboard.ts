@@ -8,7 +8,7 @@ import { Auth } from '../services/auth';
   standalone: true,
   imports: [CommonModule, RouterLink, RouterLinkActive],
   templateUrl: './dashboard.html',
-  styleUrl: './dashboard.css'
+  styleUrls: ['./dashboard.css']
 })
 export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
   // Component properties
