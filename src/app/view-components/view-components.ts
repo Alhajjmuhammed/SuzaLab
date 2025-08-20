@@ -36,6 +36,11 @@ export class ViewComponents implements OnInit {
   componentCodeExamples: CodeExplanation[] = [];
   loadingCode = false;
 
+  // Overview and Specification modals
+  showOverviewModalFlag = false;
+  showSpecificationModalFlag = false;
+  selectedComponentForModal: LabComponent | null = null;
+
   constructor(
     private compService: CompService, 
     private fb: FormBuilder, 
@@ -321,5 +326,31 @@ export class ViewComponents implements OnInit {
       .replace(/^(#\w+.*$)/gm, '<span style="color: #af00db;">$1</span>');
     
     return this.sanitizer.bypassSecurityTrustHtml(highlighted);
+  }
+
+  // Overview modal methods
+  showOverviewModal(component: LabComponent): void {
+    this.selectedComponentForModal = component;
+    this.showOverviewModalFlag = true;
+    this.cdr.detectChanges();
+  }
+
+  closeOverviewModal(): void {
+    this.showOverviewModalFlag = false;
+    this.selectedComponentForModal = null;
+    this.cdr.detectChanges();
+  }
+
+  // Specification modal methods
+  showSpecificationModal(component: LabComponent): void {
+    this.selectedComponentForModal = component;
+    this.showSpecificationModalFlag = true;
+    this.cdr.detectChanges();
+  }
+
+  closeSpecificationModal(): void {
+    this.showSpecificationModalFlag = false;
+    this.selectedComponentForModal = null;
+    this.cdr.detectChanges();
   }
 }
