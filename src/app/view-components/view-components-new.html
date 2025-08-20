@@ -166,7 +166,7 @@
                                 <div class="col-md-8">
                                     <h6 class="fw-bold">{{ selectedComponent.title }}</h6>
                                     <p class="text-muted small mb-1">{{ selectedComponent.category?.name || 'No Category' }}</p>
-                                    <div class="small" [innerHTML]="sanitizer.bypassSecurityTrustHtml(selectedComponent.description || '')"></div>
+                                    <div class="small" [innerHTML]="sanitizer.bypassSecurityTrustHtml(selectedComponent.description)"></div>
                                     <div class="stock-info">
                                         <span class="badge bg-success">{{ selectedComponent.in_stock }} available</span>
                                     </div>

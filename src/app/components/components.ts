@@ -716,21 +716,40 @@ export class Components implements OnInit {
   // ===== APPLICATIONS MANAGEMENT METHODS =====
   
   loadApplications() {
+    console.log('Starting loadApplications method');
     this.applications = [];
     this.loading = true;
+    this.forceUpdate(); // Force update to show loading state
+    
+    // Create a safety timeout to ensure loading state doesn't get stuck
+    const safetyTimeout = setTimeout(() => {
+      if (this.loading) {
+        console.warn('Safety timeout triggered - forcing loading state to false');
+        this.loading = false;
+        this.forceUpdate();
+      }
+    }, 15000); // 15 seconds safety timeout
     
     this.compService.getApplications().subscribe({
       next: (applications) => {
+        console.log('Applications loaded successfully:', applications);
         this.applications = applications;
+        this.loading = false;
         this.forceUpdate();
+        clearTimeout(safetyTimeout);
       },
       error: (err) => {
         console.error('Error loading applications:', err);
+        this.loading = false;
         this.showError('Failed to load applications');
+        this.forceUpdate();
+        clearTimeout(safetyTimeout);
       },
       complete: () => {
+        console.log('Applications loading completed');
         this.loading = false;
         this.forceUpdate();
+        clearTimeout(safetyTimeout);
       }
     });
   }
@@ -740,14 +759,8 @@ export class Components implements OnInit {
     const componentTitle = application.component?.title || 'Unknown Component';
     if (!confirm(`Approve application by ${studentName} for ${componentTitle}?`)) return;
     
-    const updateData = {
-      pending: false,
-      on_progress: true,
-      enrolled: true,
-      issued_at: new Date().toISOString()
-    };
-    
-    this.compService.updateApplication(application.id, updateData).subscribe({
+    // Use the dedicated approve endpoint instead of general update
+    this.compService.approveApplication(application.id).subscribe({
       next: (updated) => {
         this.showSuccess('Application approved successfully');
         const index = this.applications.findIndex(a => a.id === application.id);
@@ -759,6 +772,28 @@ export class Components implements OnInit {
       error: (err) => {
         console.error('Error approving application:', err);
         this.showError('Failed to approve application');
+      }
+    });
+  }
+  
+  markAsReturned(application: ComponentApplication) {
+    const studentName = this.getStudentDisplayName(application.student);
+    const componentTitle = application.component?.title || 'Unknown Component';
+    if (!confirm(`Mark components as returned for ${studentName}'s application for ${componentTitle}?`)) return;
+    
+    // Use the dedicated return endpoint 
+    this.compService.returnComponent(application.id).subscribe({
+      next: (updated) => {
+        this.showSuccess('Components marked as returned successfully');
+        const index = this.applications.findIndex(a => a.id === application.id);
+        if (index !== -1) {
+          this.applications[index] = updated;
+        }
+        this.forceUpdate();
+      },
+      error: (err) => {
+        console.error('Error marking components as returned:', err);
+        this.showError('Failed to mark components as returned');
       }
     });
   }
@@ -781,30 +816,8 @@ export class Components implements OnInit {
     });
   }
 
-  markAsCompleted(application: ComponentApplication) {
-    if (!confirm(`Mark application as completed and returned by ${this.getStudentDisplayName(application.student)}?`)) return;
-    
-    const updateData = {
-      on_progress: false,
-      return_day: true,
-      updated_at: new Date().toISOString()
-    };
-    
-    this.compService.updateApplication(application.id, updateData).subscribe({
-      next: (updated) => {
-        this.showSuccess('Application marked as completed');
-        const index = this.applications.findIndex(a => a.id === application.id);
-        if (index !== -1) {
-          this.applications[index] = updated;
-        }
-        this.forceUpdate();
-      },
-      error: (err) => {
-        console.error('Error updating application:', err);
-        this.showError('Failed to update application');
-      }
-    });
-  }
+  // Old markAsCompleted method has been replaced by the markAsReturned method above
+  // which uses the dedicated API endpoint instead of a general update
 
   getStudentDisplayName(student?: ComponentApplication['student']): string {
     if (student?.user) {

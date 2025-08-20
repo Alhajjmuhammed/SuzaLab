@@ -15,6 +15,61 @@
         <div class="content-area">
             <h1>Welcome to the Dashboard</h1>
             <p>Your one-stop solution for managing your tasks efficiently.</p>
+            
+            <!-- Applications Stats for Students -->
+            <div *ngIf="isStudent()" class="mt-4">
+                <h3 class="mb-3">My Applications Overview</h3>
+                <div *ngIf="!loading" class="row">
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="stat-card pending">
+                            <div class="stat-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ getPendingCount() }}</h3>
+                                <p>Pending</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="stat-card approved">
+                            <div class="stat-icon">
+                                <i class="fas fa-spinner"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ getInProgressCount() }}</h3>
+                                <p>In Progress</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="stat-card completed">
+                            <div class="stat-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ getCompletedCount() }}</h3>
+                                <p>Completed</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="stat-card total">
+                            <div class="stat-icon">
+                                <i class="fas fa-list"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ applications.length }}</h3>
+                                <p>Total</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div *ngIf="loading" class="text-center py-4">
+                    <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                    <p class="mt-2">Loading applications...</p>
+                </div>
+            </div>
         </div>
         <!-- End Content -->
     </div>

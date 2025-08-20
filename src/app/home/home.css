@@ -127,6 +127,73 @@
   letter-spacing: 0.025em;
 }
 
+/* Stat Card Styles */
+.stat-card {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  border-left: 4px solid;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card.pending {
+  border-left-color: #ffc107;
+}
+
+.stat-card.approved {
+  border-left-color: #007bff;
+}
+
+.stat-card.completed {
+  border-left-color: #28a745;
+}
+
+.stat-card.total {
+  border-left-color: #6c757d;
+}
+
+.stat-card .stat-icon {
+  float: right;
+  font-size: 2rem;
+  opacity: 0.3;
+}
+
+.stat-card.pending .stat-icon {
+  color: #ffc107;
+}
+
+.stat-card.approved .stat-icon {
+  color: #007bff;
+}
+
+.stat-card.completed .stat-icon {
+  color: #28a745;
+}
+
+.stat-card.total .stat-icon {
+  color: #6c757d;
+}
+
+.stat-card h3 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  color: #2c3e50;
+}
+
+.stat-card p {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin: 0;
+  font-weight: 500;
+}
+
 /* Professional Responsive Design */
 @media (max-width: 768px) {
   .page-header {
@@ -161,6 +228,14 @@
   .stat-number {
     font-size: 1.75rem;
   }
+  
+  .stat-card {
+    padding: 1rem;
+  }
+  
+  .stat-card h3 {
+    font-size: 2rem;
+  }
 }
 
 @media (max-width: 576px) {
@@ -190,5 +265,13 @@
   
   .stat-label {
     font-size: 0.8125rem;
+  }
+  
+  .stat-card {
+    padding: 0.75rem;
+  }
+  
+  .stat-card h3 {
+    font-size: 1.75rem;
   }
 }

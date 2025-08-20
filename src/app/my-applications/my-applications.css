@@ -1,10 +1,32 @@
+/* Main Content Styling */
+.mainContent {
+  padding: 1.5rem;
+  background-color: var(--background-color, #f8fffe);
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
 /* Page Header */
 .page-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 2rem 1.5rem;
-  border-radius: 0.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  position: relative;
+  border-left: 4px solid #44b78b;
+  transition: all 0.3s ease;
+}
+
+.page-header:hover {
+  border-left: 6px solid #44b78b;
+  transform: translateX(2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.breadcrumb-section {
+  margin-bottom: 0;
 }
 
 .page-title {
@@ -19,20 +41,12 @@
   margin-bottom: 0;
 }
 
-.breadcrumb {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 0.5rem 1rem;
-  border-radius: 0.25rem;
-  margin-bottom: 1rem;
-}
-
 .breadcrumb-item a {
-  color: rgba(255, 255, 255, 0.8);
   text-decoration: none;
 }
 
 .breadcrumb-item.active {
-  color: white;
+  color: #495057;
 }
 
 /* Stat Cards */
@@ -105,20 +119,20 @@
 /* Application Cards */
 .application-card .card {
   border: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
-  border-radius: 0.75rem;
+  border-radius: 0.5rem;
   overflow: hidden;
 }
 
 .application-card .card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
 }
 
 .application-card .card-header {
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-  border-bottom: 1px solid #dee2e6;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  border-bottom: 1px solid #e2e8f0;
   padding: 1rem 1.25rem;
 }
 

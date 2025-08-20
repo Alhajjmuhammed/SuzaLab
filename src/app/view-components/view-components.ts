@@ -1,15 +1,17 @@
 import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { Dashboard } from '../dashboard/dashboard';
 import { CompService } from '../services/comp-service';
+import { Auth } from '../services/auth';
 import { Category, Component as LabComponent, ComponentApplication, CodeExplanation } from '../models/component.model';
+import { Dashboard } from '../dashboard/dashboard';
 
 @Component({
   selector: 'app-view-components',
   standalone: true,
-  imports: [Dashboard, CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, Dashboard],
   templateUrl: './view-components.html',
   styleUrl: './view-components.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -45,7 +47,8 @@ export class ViewComponents implements OnInit {
     private compService: CompService, 
     private fb: FormBuilder, 
     private cdr: ChangeDetectorRef,
-    private sanitizer: DomSanitizer
+    public sanitizer: DomSanitizer,
+    private auth: Auth
   ) {
     this.applicationForm = this.fb.group({
       qty: [1, [Validators.required, Validators.min(1)]],
@@ -58,6 +61,11 @@ export class ViewComponents implements OnInit {
   ngOnInit() {
     this.loadComponents();
     this.loadCategories();
+    
+    // Set up days remaining update interval (once per day)
+    // Safer to initialize this here rather than in the constructor
+    setTimeout(() => this.updateDaysRemainingDisplay(), 0); // Run after initialization
+    setInterval(() => this.updateDaysRemainingDisplay(), 86400000); // Update every 24 hours
   }
 
   private showError(message: string) {
@@ -178,16 +186,34 @@ export class ViewComponents implements OnInit {
     this.submitting = true;
     const formValue = this.applicationForm.value;
     
-    const applicationData: Partial<ComponentApplication> = {
+    // Get current user from auth service
+    const currentUser = this.auth.getUser();
+    
+    if (!currentUser) {
+      this.showError('Please log in to submit an application.');
+      this.submitting = false;
+      return;
+    }
+
+    // Get student ID from the profile data - Student model ID, not User ID
+    const studentId = currentUser.profile?.id;
+    
+    if (!studentId) {
+      this.showError('Student profile not found. Please contact support.');
+      this.submitting = false;
+      return;
+    }
+    
+    const applicationData = {
+      student_id: studentId,
       component_id: this.selectedComponent.id,
       qty: formValue.qty,
       purpose: formValue.purpose,
-      how_many_date: formValue.how_many_date,
-      pending: true,
-      on_progress: false,
-      enrolled: false,
-      requested_at: new Date().toISOString()
+      how_many_date: formValue.how_many_date
     };
+
+    console.log('Current user:', currentUser); // Debug log
+    console.log('Submitting application data:', applicationData); // Debug log
 
     this.compService.createApplication(applicationData).subscribe({
       next: (result) => {
@@ -217,6 +243,59 @@ export class ViewComponents implements OnInit {
 
   trackByComponentId(index: number, component: LabComponent): number {
     return component.id;
+  }
+  
+  // Days remaining functionality
+  updateDaysRemainingDisplay() {
+    // If an application was submitted, update the remaining days based on today's date
+    // This would automatically decrease as days pass
+    const daysRemaining = this.applicationForm.get('how_many_date')?.value || 7;
+    
+    // This is where you could subtract days based on how many days have passed since application
+    console.log('Days remaining updated:', daysRemaining);
+    
+    // Use markForCheck instead of detectChanges to be safer
+    // This will mark the component to be checked in the next change detection cycle
+    // rather than forcing an immediate check
+    this.cdr.markForCheck();
+  }
+  
+  getDaysRemaining(): number {
+    const selectedDays = this.applicationForm.get('how_many_date')?.value || 7;
+    return selectedDays;
+  }
+  
+  calculateDaysRemaining(startDate: Date, totalDays: number): number {
+    const today = new Date();
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + totalDays);
+    
+    const remainingMs = endDate.getTime() - today.getTime();
+    const remainingDays = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+    
+    return Math.max(0, remainingDays);
+  }
+  
+  // This method will be called periodically (e.g., daily) to update remaining days in the backend
+  updateRemainingDaysInBackend(applicationId: number) {
+    this.compService.updateRemainingDays(applicationId).subscribe({
+      next: (updatedApplication) => {
+        console.log('Remaining days updated in backend:', updatedApplication);
+        // You could update the local application data here if needed
+      },
+      error: (err) => {
+        console.error('Error updating remaining days:', err);
+      }
+    });
+  }
+  
+  onDaysChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const value = parseInt(input.value);
+    if (!isNaN(value) && value >= 1 && value <= 30) {
+      this.applicationForm.get('how_many_date')?.setValue(value);
+      this.updateDaysRemainingDisplay();
+    }
   }
 
   onImageError(event: any) {
@@ -331,6 +410,23 @@ export class ViewComponents implements OnInit {
     return tmp.textContent || tmp.innerText || '';
   }
 
+  getLimitedDescription(description: string | undefined): string {
+    if (!description) return '';
+    
+    // Strip HTML tags first
+    const cleanText = this.stripHtml(description);
+    
+    // Split into words and limit to 8 words
+    const words = cleanText.split(' ').filter(word => word.trim().length > 0);
+    const maxWords = 8;
+    
+    if (words.length <= maxWords) {
+      return cleanText;
+    }
+    
+    return words.slice(0, maxWords).join(' ') + '...';
+  }
+
   sanitizeHtml(html: string | undefined): SafeHtml {
     if (!html) return this.sanitizer.bypassSecurityTrustHtml('');
     return this.sanitizer.bypassSecurityTrustHtml(html);
@@ -386,6 +482,20 @@ export class ViewComponents implements OnInit {
   closeSpecificationModal(): void {
     this.showSpecificationModalFlag = false;
     this.selectedComponentForModal = null;
+    this.cdr.detectChanges();
+  }
+
+  // Application form methods
+  closeApplicationForm(): void {
+    this.showApplicationForm = false;
+    this.selectedComponent = null;
+    this.cdr.detectChanges();
+  }
+
+  // Arduino code methods
+  showArduinoCode(component: LabComponent): void {
+    this.selectedComponentCode = component;
+    this.showCodeModal = true;
     this.cdr.detectChanges();
   }
 }

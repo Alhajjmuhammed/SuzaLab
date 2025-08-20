@@ -10,12 +10,6 @@
                     </ol>
                 </nav>
             </div>
-            <div class="page-title-section">
-                <h1 class="page-title">
-                    <i class="fas fa-file-alt me-2"></i>My Applications
-                </h1>
-                <p class="page-subtitle">Track the status of your component requests</p>
-            </div>
         </div>
 
         <!-- Alert Messages -->
@@ -34,53 +28,6 @@
 
         <!-- Applications Content -->
         <div *ngIf="!loading">
-            <!-- Quick Stats -->
-            <div class="row mb-4">
-                <div class="col-md-3 col-sm-6 mb-3">
-                    <div class="stat-card pending">
-                        <div class="stat-icon">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3>{{ getPendingCount() }}</h3>
-                            <p>Pending</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6 mb-3">
-                    <div class="stat-card approved">
-                        <div class="stat-icon">
-                            <i class="fas fa-spinner"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3>{{ getInProgressCount() }}</h3>
-                            <p>In Progress</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6 mb-3">
-                    <div class="stat-card completed">
-                        <div class="stat-icon">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3>{{ getCompletedCount() }}</h3>
-                            <p>Completed</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6 mb-3">
-                    <div class="stat-card total">
-                        <div class="stat-icon">
-                            <i class="fas fa-list"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3>{{ applications.length }}</h3>
-                            <p>Total</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- Applications List -->
             <div class="applications-container">
@@ -156,11 +103,24 @@
                                             <!-- Due Date Info (for approved items) -->
                                             <div *ngIf="app.on_progress && !app.return_day && getDaysRemaining(app) !== null" 
                                                  class="due-date-info mt-3">
-                                                <div class="alert alert-info py-2 px-3 mb-0">
-                                                    <small>
-                                                        <i class="fas fa-calendar-alt me-1"></i>
-                                                        <strong>{{ getDaysRemainingText(app) }}</strong>
-                                                    </small>
+                                                <div class="alert alert-info py-2 px-3 mb-0 d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <small>
+                                                            <i class="fas fa-calendar-alt me-1"></i>
+                                                            <strong>{{ getDaysRemainingText(app) }}</strong>
+                                                        </small>
+                                                    </div>
+                                                    <button class="btn btn-sm btn-outline-info" 
+                                                            title="Update Days Remaining" 
+                                                            (click)="updateDaysRemaining(app); $event.stopPropagation()"
+                                                            [disabled]="updatingIds.has(app.id)">
+                                                        <i *ngIf="!updatingIds.has(app.id)" class="fas fa-sync-alt"></i>
+                                                        <span *ngIf="updatingIds.has(app.id)" class="spinner-border spinner-border-sm" role="status"></span>
+                                                    </button>
+                                                </div>
+                                                <div class="text-muted small mt-1">
+                                                    <i class="fas fa-info-circle me-1"></i>
+                                                    Updates automatically each day
                                                 </div>
                                             </div>
                                         </div>

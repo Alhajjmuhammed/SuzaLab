@@ -258,6 +258,15 @@ export class CompService {
     );
   }
 
+  returnComponent(id: number): Observable<ComponentApplication> {
+    return this.http.post<ComponentApplication>(`${this.componentApiUrl}/applications/${id}/return/`, {}, {
+      headers: this.getHeaders()
+    }).pipe(
+      timeout(10000),
+      catchError(this.handleError)
+    );
+  }
+
   updateRemainingDays(id: number): Observable<ComponentApplication> {
     return this.http.post<ComponentApplication>(`${this.componentApiUrl}/applications/${id}/update_remaining/`, {}, {
       headers: this.getHeaders()

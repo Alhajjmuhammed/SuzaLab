@@ -697,7 +697,7 @@ void loop() {
                                     <!-- Mark as completed (for in-progress applications) -->
                                     <button *ngIf="app.on_progress && !app.return_day" 
                                             class="btn btn-sm btn-primary" 
-                                            (click)="markAsCompleted(app)" 
+                                            (click)="markAsReturned(app)" 
                                             title="Mark as Completed">
                                         <i class="fas fa-check-circle"></i>
                                     </button>
