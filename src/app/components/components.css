@@ -59,3 +59,156 @@
   font-weight: 600;
   margin: 0 0.5rem;
 }
+
+/* Component Enhancement Styles */
+.img-thumbnail {
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.img-thumbnail:hover {
+  border-color: #44b78b;
+  transform: scale(1.05);
+}
+
+.card {
+  border: none;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.btn-group .btn {
+  transition: all 0.2s ease;
+}
+
+.btn-group .btn:hover {
+  transform: translateY(-1px);
+}
+
+.table th {
+  font-weight: 600;
+  background-color: #f8f9fa;
+  border-color: #e9ecef;
+  color: #495057;
+}
+
+.table td {
+  vertical-align: middle;
+  border-color: #e9ecef;
+}
+
+.badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Form Enhancements */
+.form-label {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #44b78b;
+  box-shadow: 0 0 0 0.2rem rgba(68, 183, 139, 0.25);
+}
+
+/* Loading and Error States */
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+.alert {
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+/* Image Upload Section */
+.image-upload-section {
+  background-color: #f8f9fa;
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+.image-upload-section:hover {
+  border-color: #44b78b;
+  background-color: #f0f9ff;
+}
+
+.image-preview-container {
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+}
+
+/* Tab Navigation Enhancements */
+.nav-tabs .nav-link {
+  font-weight: 500;
+  color: #6c757d;
+  border: none;
+  border-bottom: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link:hover {
+  border-color: transparent;
+  border-bottom-color: #44b78b;
+  color: #44b78b;
+}
+
+.nav-tabs .nav-link.active {
+  color: #44b78b;
+  background-color: transparent;
+  border-color: transparent;
+  border-bottom-color: #44b78b;
+  font-weight: 600;
+}
+
+/* Empty State Styling */
+.table tbody tr td {
+  padding: 1rem;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Button Enhancements */
+.btn {
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn-success {
+  background-color: #44b78b;
+  border-color: #44b78b;
+}
+
+.btn-success:hover {
+  background-color: #369970;
+  border-color: #369970;
+}
+
+.btn-outline-primary:hover {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.btn-outline-danger:hover {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}

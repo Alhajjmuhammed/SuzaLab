@@ -12,7 +12,282 @@
             </div>
         </div>
 
-        
-    </div>
+
+        <!-- Tabs Navigation -->
+        <ul class="nav nav-tabs mb-4" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" [class.active]="activeTab === 'components'" (click)="setActiveTab('components')" type="button" role="tab">Components</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" [class.active]="activeTab === 'categories'" (click)="setActiveTab('categories')" type="button" role="tab">Categories</button>
+            </li>
+        </ul>
+
+        <!-- Add Button (per tab) -->
+        <div class="d-flex justify-content-end align-items-center mb-4">
+            <button *ngIf="activeTab === 'components'" class="btn btn-success" (click)="addComponent()">
+                <i class="fas fa-plus me-2"></i>Add Component
+            </button>
+            <button *ngIf="activeTab === 'categories'" class="btn btn-success" (click)="addCategory()">
+                <i class="fas fa-plus me-2"></i>Add Category
+            </button>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="loading" class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading components data...</p>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="error" class="alert alert-danger" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+        </div>
+
+        <!-- Main Content -->
+        <div *ngIf="!loading && !error">
+            <!-- Components Tab -->
+            <ng-container *ngIf="activeTab === 'components'">
+                <div class="table-responsive mb-4">
+                    <table class="table table-bordered table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Image</th>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>In Stock</th>
+                                <th>Description</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let comp of components; trackBy: trackByComponentId">
+                                <td class="text-center">
+                                    <img *ngIf="comp.feature" [src]="comp.feature" alt="{{comp.title}}" 
+                                         class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;">
+                                    <span *ngIf="!comp.feature" class="text-muted">
+                                        <i class="fas fa-image" style="font-size: 24px;"></i>
+                                    </span>
+                                </td>
+                                <td><strong>{{ comp.title }}</strong></td>
+                                <td>
+                                    <span *ngIf="comp.category" class="badge bg-secondary">{{ comp.category.name }}</span>
+                                    <span *ngIf="!comp.category" class="text-muted">-</span>
+                                </td>
+                                <td>
+                                    <span class="badge" [class]="comp.in_stock > 0 ? 'bg-success' : 'bg-danger'">
+                                        {{ comp.in_stock }}
+                                    </span>
+                                </td>
+                                <td>{{ comp.description || '-' }}</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-primary" (click)="editComponent(comp)" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" (click)="deleteComponent(comp)" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr *ngIf="components.length === 0">
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-2x mb-2"></i>
+                                    <div>No components found. <a href="#" (click)="addComponent()" class="text-decoration-none">Add your first component</a></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Add/Edit Form -->
+                <div *ngIf="showForm" class="card mb-4">
+                    <div class="card-header">
+                        <strong>{{ isEdit ? 'Edit' : 'Add' }} Component</strong>
+                    </div>
+                    <div class="card-body">
+                        <form [formGroup]="componentForm" (ngSubmit)="saveComponent()">
+                            <!-- Image Upload Section -->
+                            <div class="mb-4">
+                                <label class="form-label">Component Image</label>
+                                <div class="d-flex align-items-start gap-3">
+                                    <!-- Image Preview -->
+                                    <div class="flex-shrink-0">
+                                        <div class="border rounded p-2 text-center" style="width: 120px; height: 120px; display: flex; align-items: center; justify-content: center;">
+                                            <img *ngIf="imagePreview" [src]="imagePreview" alt="Preview" 
+                                                 class="img-fluid rounded" style="max-width: 100%; max-height: 100%; object-fit: cover;">
+                                            <div *ngIf="!imagePreview" class="text-muted">
+                                                <i class="fas fa-image fa-2x"></i>
+                                                <div class="small mt-1">No image</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Upload Controls -->
+                                    <div class="flex-grow-1">
+                                        <input type="file" id="featureImage" class="form-control mb-2" 
+                                               accept="image/*" (change)="onFileSelected($event)">
+                                        <div class="small text-muted mb-2">
+                                            Accepted formats: JPG, PNG, GIF. Max size: 5MB
+                                        </div>
+                                        <button *ngIf="selectedFile || imagePreview" type="button" 
+                                                class="btn btn-sm btn-outline-danger" (click)="removeImage()">
+                                            <i class="fas fa-times me-1"></i>Remove Image
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Title <span class="text-danger">*</span></label>
+                                        <input class="form-control" formControlName="title" required />
+                                        <div *ngIf="componentForm.get('title')?.invalid && (componentForm.get('title')?.dirty || componentForm.get('title')?.touched)" 
+                                             class="text-danger small mt-1">
+                                            Title is required (minimum 2 characters)
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Category</label>
+                                        <select class="form-select" formControlName="category_id">
+                                            <option [ngValue]="null">-- Select Category --</option>
+                                            <option *ngFor="let cat of categories" [ngValue]="cat.id">{{ cat.name }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">In Stock <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" formControlName="in_stock" required min="0" />
+                                        <div *ngIf="componentForm.get('in_stock')?.invalid && (componentForm.get('in_stock')?.dirty || componentForm.get('in_stock')?.touched)" 
+                                             class="text-danger small mt-1">
+                                            Stock quantity is required and must be 0 or more
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" formControlName="description" rows="3" 
+                                          placeholder="Brief description of the component"></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Overview</label>
+                                <textarea class="form-control" formControlName="overview" rows="4" 
+                                          placeholder="Detailed overview of the component's features and capabilities"></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Specification</label>
+                                <textarea class="form-control" formControlName="specification" rows="4" 
+                                          placeholder="Technical specifications, dimensions, requirements, etc."></textarea>
+                            </div>
+
+                            <!-- Form Actions -->
+                            <div class="d-flex justify-content-end gap-2">
+                                <button type="button" class="btn btn-secondary" (click)="cancelForm()" [disabled]="isUploading">
+                                    Cancel
+                                </button>
+                                <button type="submit" class="btn btn-success" [disabled]="componentForm.invalid || isUploading">
+                                    <span *ngIf="isUploading" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    {{ isUploading ? 'Saving...' : (isEdit ? 'Update Component' : 'Create Component') }}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </ng-container>
+
+            <!-- Categories Tab -->
+            <ng-container *ngIf="activeTab === 'categories'">
+                <div class="table-responsive mb-4">
+                    <table class="table table-bordered table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Components Count</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let cat of categories; trackBy: trackByCategoryId">
+                                <td><strong>{{ cat.name }}</strong></td>
+                                <td>{{ cat.description || '-' }}</td>
+                                <td>
+                                    <span class="badge bg-info">
+                                        {{ getComponentCountForCategory(cat.id) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-primary" (click)="editCategory(cat)" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" (click)="deleteCategory(cat)" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr *ngIf="categories.length === 0">
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    <i class="fas fa-tags fa-2x mb-2"></i>
+                                    <div>No categories found. <a href="#" (click)="addCategory()" class="text-decoration-none">Create your first category</a></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Add/Edit Category Form -->
+                <div *ngIf="showCategoryForm" class="card mb-4">
+                    <div class="card-header">
+                        <strong>{{ isEditCategory ? 'Edit' : 'Add' }} Category</strong>
+                    </div>
+                    <div class="card-body">
+                        <form [formGroup]="categoryForm" (ngSubmit)="saveCategory()">
+                            <div class="mb-3">
+                                <label class="form-label">Name <span class="text-danger">*</span></label>
+                                <input class="form-control" formControlName="name" required 
+                                       placeholder="Enter category name" />
+                                <div *ngIf="categoryForm.get('name')?.invalid && (categoryForm.get('name')?.dirty || categoryForm.get('name')?.touched)" 
+                                     class="text-danger small mt-1">
+                                    Name is required (minimum 2 characters)
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" formControlName="description" rows="3" 
+                                          placeholder="Brief description of this category"></textarea>
+                            </div>
+                            
+                            <!-- Form Actions -->
+                            <div class="d-flex justify-content-end gap-2">
+                                <button type="button" class="btn btn-secondary" (click)="cancelCategoryForm()">
+                                    Cancel
+                                </button>
+                                <button type="submit" class="btn btn-success" [disabled]="categoryForm.invalid">
+                                    {{ isEditCategory ? 'Update Category' : 'Create Category' }}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </ng-container>
+        </div>
+        </div>
+
 </app-dashboard>
 
