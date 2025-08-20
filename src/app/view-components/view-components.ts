@@ -48,7 +48,7 @@ export class ViewComponents implements OnInit {
     private sanitizer: DomSanitizer
   ) {
     this.applicationForm = this.fb.group({
-      qty: [1, [Validators.required, Validators.min(1), Validators.max(10)]],
+      qty: [1, [Validators.required, Validators.min(1)]],
       purpose: ['', [Validators.required]],
       how_many_date: [7, [Validators.required, Validators.min(1), Validators.max(30)]],
       request_code: [false] // Add option to request Arduino code
@@ -149,6 +149,18 @@ export class ViewComponents implements OnInit {
   requestComponent(component: LabComponent) {
     this.selectedComponent = component;
     this.showApplicationForm = true;
+    
+    // Update quantity validation based on component stock
+    const qtyControl = this.applicationForm.get('qty');
+    if (qtyControl) {
+      qtyControl.setValidators([
+        Validators.required, 
+        Validators.min(1), 
+        Validators.max(component.in_stock || 1)
+      ]);
+      qtyControl.updateValueAndValidity();
+    }
+    
     this.applicationForm.reset({
       qty: 1,
       purpose: '',
@@ -215,9 +227,8 @@ export class ViewComponents implements OnInit {
 
   // Arduino code modal methods
   viewArduinoCode(component: LabComponent) {
-    console.log('=== DEBUG: Starting viewArduinoCode ===');
-    console.log('Component:', component);
-    console.log('Component ID:', component.id);
+    // Clear previous data to avoid showing old data
+    this.componentCodeExamples = [];
     
     this.selectedComponentCode = component;
     this.loadingCode = true;
@@ -227,33 +238,28 @@ export class ViewComponents implements OnInit {
     // Force stop loading after 5 seconds as backup
     const timeoutId = setTimeout(() => {
       if (this.loadingCode) {
-        console.error('TIMEOUT: API call took too long - forcing stop');
         this.loadingCode = false;
         this.componentCodeExamples = [];
         this.showError('Request timed out. The server may be unavailable.');
         this.cdr.detectChanges();
       }
     }, 5000); // 5 second timeout
-
-    console.log('Making API call to:', `${this.compService['componentApiUrl']}/components/${component.id}/code/`);
     
     this.compService.getCodeExplanations(component.id).subscribe({
       next: (codes) => {
         clearTimeout(timeoutId);
-        console.log('✅ SUCCESS: Received code explanations:', codes);
-        this.componentCodeExamples = codes;
+        
+        // Filter codes to only show ones that match the requested component
+        const filteredCodes = codes?.filter(codeExample => 
+          codeExample.component?.id === component.id
+        ) || [];
+        
+        this.componentCodeExamples = filteredCodes;
         this.loadingCode = false;
         this.cdr.detectChanges();
       },
       error: (err) => {
         clearTimeout(timeoutId);
-        console.error('❌ ERROR: Failed to load code examples:', err);
-        console.error('Error details:', {
-          status: err.status,
-          statusText: err.statusText,
-          url: err.url,
-          message: err.message
-        });
         this.componentCodeExamples = [];
         this.loadingCode = false;
         this.showError('Failed to load Arduino code examples: ' + (err.statusText || err.message));
@@ -261,7 +267,6 @@ export class ViewComponents implements OnInit {
       },
       complete: () => {
         clearTimeout(timeoutId);
-        console.log('🏁 COMPLETE: API call finished');
         this.loadingCode = false;
         this.cdr.detectChanges();
       }
@@ -289,6 +294,31 @@ export class ViewComponents implements OnInit {
     });
   }
 
+  copyAllComponentCode() {
+    if (!this.componentCodeExamples || this.componentCodeExamples.length === 0) {
+      this.showError('No code available to copy');
+      return;
+    }
+
+    // Combine all code examples for this component
+    let allCode = '';
+    this.componentCodeExamples.forEach((codeExample, index) => {
+      if (index > 0) {
+        allCode += '\n\n// ====== Additional Example ' + (index + 1) + ' ======\n';
+        if (codeExample.description) {
+          allCode += '// ' + this.stripHtml(codeExample.description) + '\n';
+        }
+      }
+      allCode += codeExample.code || '';
+    });
+
+    navigator.clipboard.writeText(allCode).then(() => {
+      this.showSuccess('All component code copied to clipboard!');
+    }).catch(() => {
+      this.showError('Failed to copy code to clipboard');
+    });
+  }
+
   // Arduino IDE helper methods
   getCodeLines(code: string | undefined): string[] {
     return code ? code.split('\n') : [];
@@ -299,6 +329,11 @@ export class ViewComponents implements OnInit {
     const tmp = document.createElement('div');
     tmp.innerHTML = html;
     return tmp.textContent || tmp.innerText || '';
+  }
+
+  sanitizeHtml(html: string | undefined): SafeHtml {
+    if (!html) return this.sanitizer.bypassSecurityTrustHtml('');
+    return this.sanitizer.bypassSecurityTrustHtml(html);
   }
 
   highlightArduinoCode(code: string | undefined): SafeHtml {

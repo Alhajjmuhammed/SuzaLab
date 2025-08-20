@@ -121,7 +121,10 @@ export class Components implements OnInit {
     this.cancelCategoryForm();
     this.cancelCodeForm();
     if (tab === 'code') {
-      this.loadCodeExplanations();
+      // Only load if we don't have data or if we have components but no code explanations
+      if (this.codeExplanations.length === 0 && this.components.length > 0) {
+        this.loadCodeExplanations();
+      }
     } else if (tab === 'applications') {
       this.loadApplications();
     }
@@ -520,22 +523,57 @@ export class Components implements OnInit {
     this.codeExplanations = []; // Reset the array
     this.loading = true;
     
-    // Load code explanations for all components
-    this.components.forEach(component => {
-      this.compService.getCodeExplanations(component.id).subscribe({
-        next: (codes) => {
-          this.codeExplanations.push(...codes);
-          this.forceUpdate();
-        },
-        error: (err) => {
-          console.error(`Error loading code explanations for component ${component.id}:`, err);
-        },
-        complete: () => {
-          this.loading = false;
-          this.forceUpdate();
+    // Check if we have components loaded
+    if (this.components.length === 0) {
+      this.loading = false;
+      this.forceUpdate();
+      return;
+    }
+    
+    // Use forkJoin to wait for all requests to complete
+    const codeRequests = this.components.map(component => 
+      this.compService.getCodeExplanations(component.id)
+    );
+    
+    // If no components, complete immediately
+    if (codeRequests.length === 0) {
+      this.loading = false;
+      this.forceUpdate();
+      return;
+    }
+    
+    // Use Promise.allSettled to handle all requests, even if some fail
+    Promise.allSettled(codeRequests.map(req => req.toPromise())).then(results => {
+      // Use a Set to prevent duplicates based on code explanation ID
+      const uniqueCodeExplanations = new Map<number, any>();
+      
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled' && result.value) {
+          result.value.forEach((codeExplanation: any) => {
+            // Only add if we haven't seen this ID before
+            if (!uniqueCodeExplanations.has(codeExplanation.id)) {
+              uniqueCodeExplanations.set(codeExplanation.id, codeExplanation);
+            }
+          });
+        } else if (result.status === 'rejected') {
+          console.error(`Error loading code explanations for component ${this.components[index].id}:`, result.reason);
         }
       });
+      
+      // Convert Map values back to array
+      this.codeExplanations = Array.from(uniqueCodeExplanations.values());
+      this.loading = false;
+      this.forceUpdate();
+    }).catch(err => {
+      console.error('Error loading code explanations:', err);
+      this.loading = false;
+      this.forceUpdate();
     });
+  }
+
+  refreshCodeExplanations() {
+    console.log('Refreshing code explanations...');
+    this.loadCodeExplanations();
   }
 
   addCodeExplanation(component?: LabComponent) {
@@ -550,7 +588,7 @@ export class Components implements OnInit {
     this.cancelForm();
     this.cancelCategoryForm();
     // Don't call cancelCodeForm() here as we want to show the form
-    this.loadCodeExplanations();
+    // loadCodeExplanations() is not needed here - data is already loaded when tab is switched
     
     // Now show the form
     this.showCodeForm = true;
@@ -586,11 +624,22 @@ export class Components implements OnInit {
 
   saveCodeExplanation() {
     if (this.codeForm.invalid) {
+      // Mark all fields as touched to show validation errors
+      Object.keys(this.codeForm.controls).forEach(key => {
+        this.codeForm.get(key)?.markAsTouched();
+      });
       this.showError('Please fill in all required fields correctly');
+      this.forceUpdate();
       return;
     }
 
     const formValue = this.codeForm.value;
+    
+    // Re-enable component_id for submission if it was disabled
+    if (this.codeForm.get('component_id')?.disabled) {
+      this.codeForm.get('component_id')?.enable();
+      formValue.component_id = this.selectedCodeExplanation?.component.id;
+    }
     
     if (this.isEditCode && this.selectedCodeExplanation) {
       this.compService.updateCodeExplanation(this.selectedCodeExplanation.id, formValue).subscribe({

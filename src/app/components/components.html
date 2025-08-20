@@ -364,7 +364,24 @@
 
             <!-- Arduino Code Tab -->
             <ng-container *ngIf="activeTab === 'code'">
-                <div class="table-responsive mb-4">
+                <!-- Loading State -->
+                <div *ngIf="loading" class="text-center py-5">
+                    <i class="fas fa-spinner fa-spin fa-2x text-primary mb-3"></i>
+                    <div class="text-muted">Loading Arduino code examples...</div>
+                </div>
+                
+                <!-- Refresh Button -->
+                <div *ngIf="!loading" class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="text-muted small">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Showing {{ codeExplanations.length }} code explanation(s)
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary" (click)="refreshCodeExplanations()" [disabled]="loading">
+                        <i class="fas fa-sync-alt me-1"></i>Refresh
+                    </button>
+                </div>
+                
+                <div *ngIf="!loading" class="table-responsive mb-4">
                     <table class="table table-bordered table-hover align-middle">
                         <thead class="table-light">
                             <tr>
@@ -385,6 +402,7 @@
                                         <div>
                                             <strong>{{ code.component.title }}</strong>
                                             <div class="small text-muted">{{ code.component.category?.name || 'No Category' }}</div>
+                                            <div class="badge bg-info small">ID: {{ code.id }} | Component ID: {{ code.component.id }}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -421,7 +439,7 @@
                 </div>
 
                 <!-- Add/Edit Arduino Code Form -->
-                <div *ngIf="showCodeForm" class="card mb-4">
+                <div *ngIf="!loading && showCodeForm" class="card mb-4">
                     <div class="card-header">
                         <strong>{{ isEditCode ? 'Edit' : 'Add' }} Arduino Code</strong>
                     </div>
@@ -439,7 +457,7 @@
                                         </select>
                                         <div *ngIf="codeForm.get('component_id')?.invalid && (codeForm.get('component_id')?.dirty || codeForm.get('component_id')?.touched)" 
                                              class="text-danger small mt-1">
-                                            Please select a component
+                                            <i class="fas fa-exclamation-triangle me-1"></i>Please select a component
                                         </div>
                                     </div>
                                 </div>
@@ -513,6 +531,7 @@ void loop() {
                         </form>
                     </div>
                 </div>
+                <!-- End of loading conditional -->
             </ng-container>
         </div>
 

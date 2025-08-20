@@ -216,6 +216,11 @@ textarea.form-control {
 .table td {
   vertical-align: middle;
   border-color: #e9ecef;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  max-width: 300px;
 }
 
 .badge {
@@ -395,17 +400,30 @@ textarea.form-control {
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.4;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 .rich-text-preview {
   max-width: 250px;
   font-size: 0.875rem;
   line-height: 1.4;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  overflow: hidden;
 }
 
 .rich-text-preview p {
   margin: 0 0 0.25rem 0;
   font-size: 0.875rem;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 .rich-text-preview p:last-child {
@@ -651,10 +669,19 @@ textarea.form-control {
   max-width: 250px;
   font-size: 0.85rem;
   line-height: 1.3;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  overflow: hidden;
 }
 
 .rich-text-preview p {
   margin: 0 0 0.25rem 0;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 .rich-text-preview p:last-child {
@@ -683,6 +710,11 @@ textarea.form-control {
 .table td {
   vertical-align: middle;
   font-size: 0.9rem;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  max-width: 300px;
 }
 
 /* Student info styling in applications */
@@ -740,4 +772,21 @@ textarea.form-control {
 
 ::ng-deep .ql-snow .ql-stroke {
   stroke: #44b78b;
+}
+
+/* Table description column specific styling */
+.table td:nth-child(5) {
+  max-width: 250px;
+  min-width: 150px;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+/* Ensure all table content wraps properly */
+.table td * {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }

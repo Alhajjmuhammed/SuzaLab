@@ -169,6 +169,24 @@
 /* Modal content styling */
 .rich-text-content {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  white-space: normal;
+}
+
+.rich-text-content * {
+  max-width: 100%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.rich-text-content pre,
+.rich-text-content code {
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 .rich-text-content h1, .rich-text-content h2, .rich-text-content h3,
@@ -196,11 +214,30 @@
   z-index: 1050;
 }
 
+.modal-body {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+
+.modal-content {
+  max-width: 100%;
+  overflow: hidden;
+}
+
 .selected-component-info {
   background: #f8f9fa;
   border-radius: 0.5rem;
   padding: 1rem;
   border: 1px solid #dee2e6;
+}
+
+.selected-component-info .small {
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  white-space: normal;
 }
 
 .stock-info .badge {

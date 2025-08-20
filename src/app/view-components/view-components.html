@@ -81,7 +81,7 @@
                         <!-- Component Description -->
                         <div class="component-description mb-3 flex-grow-1">
                             <p class="card-text text-muted" *ngIf="component.description">
-                                {{ component.description.length > 100 ? (component.description.substring(0, 100) + '...') : component.description }}
+                                {{ stripHtml(component.description).length > 100 ? (stripHtml(component.description).substring(0, 100) + '...') : stripHtml(component.description) }}
                             </p>
                             <p class="card-text text-muted" *ngIf="!component.description">
                                 No description available
@@ -166,7 +166,7 @@
                                 <div class="col-md-8">
                                     <h6 class="fw-bold">{{ selectedComponent.title }}</h6>
                                     <p class="text-muted small mb-1">{{ selectedComponent.category?.name || 'No Category' }}</p>
-                                    <p class="small">{{ selectedComponent.description }}</p>
+                                    <div class="small" [innerHTML]="sanitizeHtml(selectedComponent.description)"></div>
                                     <div class="stock-info">
                                         <span class="badge bg-success">{{ selectedComponent.in_stock }} available</span>
                                     </div>
@@ -251,7 +251,7 @@
                 </h5>
                 <button type="button" class="btn-close" (click)="closeCodeModal()"></button>
             </div>
-            
+
             <!-- Arduino IDE Body -->
             <div class="modal-body p-0" style="height: calc(100% - 120px); background: #ffffff;">
                 <!-- Loading State -->
@@ -275,9 +275,10 @@
                         </div>
                         <div class="ms-auto d-flex gap-2">
                             <button class="btn btn-sm btn-primary" 
-                                    (click)="copyCodeToClipboard(componentCodeExamples[0] && componentCodeExamples[0].code ? componentCodeExamples[0].code : '')" 
-                                    title="Copy to clipboard">
-                                <i class="fas fa-copy me-1"></i>Copy
+                                    (click)="copyAllComponentCode()"
+                                    [disabled]="!componentCodeExamples.length"
+                                    title="Copy all code for this component">
+                                <i class="fas fa-copy me-1"></i>Copy All
                             </button>
                             <button class="btn btn-sm btn-secondary" 
                                     disabled title="Verify">
@@ -361,7 +362,7 @@
                 <button type="button" class="btn-close" (click)="closeOverviewModal()"></button>
             </div>
             <div class="modal-body" style="background: #ffffff;">
-                <div [innerHTML]="selectedComponentForModal?.overview" class="rich-text-content" style="color: #495057; font-size: 1rem; line-height: 1.6;"></div>
+                <div [innerHTML]="sanitizeHtml(selectedComponentForModal?.overview)" class="rich-text-content" style="color: #495057; font-size: 1rem; line-height: 1.6;"></div>
             </div>
             <div class="modal-footer" style="background: #f8f9fa; border-top: 1px solid #dee2e6;">
                 <button type="button" class="btn btn-secondary" (click)="closeOverviewModal()">
@@ -383,7 +384,7 @@
                 <button type="button" class="btn-close" (click)="closeSpecificationModal()"></button>
             </div>
             <div class="modal-body" style="background: #ffffff;">
-                <div [innerHTML]="selectedComponentForModal?.specification" class="rich-text-content" style="color: #495057; font-size: 1rem; line-height: 1.6;"></div>
+                <div [innerHTML]="sanitizeHtml(selectedComponentForModal?.specification)" class="rich-text-content" style="color: #495057; font-size: 1rem; line-height: 1.6;"></div>
             </div>
             <div class="modal-footer" style="background: #f8f9fa; border-top: 1px solid #dee2e6;">
                 <button type="button" class="btn btn-secondary" (click)="closeSpecificationModal()">
