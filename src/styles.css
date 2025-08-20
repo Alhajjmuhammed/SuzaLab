@@ -1,5 +1,8 @@
 /* Global styles for the application */
 
+/* Import Quill styles */
+@import 'quill/dist/quill.snow.css';
+
 /* Font Awesome will be imported through angular.json - removing conflicting imports */
 
 /* Global font family */

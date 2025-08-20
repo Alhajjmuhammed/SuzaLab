@@ -2,6 +2,7 @@
 import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { QuillModule } from 'ngx-quill';
 import { Dashboard } from '../dashboard/dashboard';
 import { CompService } from '../services/comp-service';
 import { Category, Component as LabComponent } from '../models/component.model';
@@ -9,7 +10,7 @@ import { Category, Component as LabComponent } from '../models/component.model';
 @Component({
   selector: 'app-components',
   standalone: true,
-  imports: [Dashboard, CommonModule, ReactiveFormsModule],
+  imports: [Dashboard, CommonModule, ReactiveFormsModule, QuillModule],
   templateUrl: './components.html',
   styleUrls: ['./components.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -34,11 +35,35 @@ export class Components implements OnInit {
   isEdit = false;
   componentForm: FormGroup;
   
+  // Details view
+  showDetailsModal = false;
+  detailsComponent: LabComponent | null = null;
+  
   // File upload properties
   selectedFile: File | null = null;
   imagePreview: string | null = null;
   uploadProgress = 0;
   isUploading = false;
+
+  // Quill editor configuration
+  quillConfig = {
+    toolbar: [
+      ['bold', 'italic', 'underline', 'strike'],        // toggled buttons
+      ['blockquote', 'code-block'],
+      [{ 'header': 1 }, { 'header': 2 }],               // custom button values
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      [{ 'script': 'sub'}, { 'script': 'super' }],      // superscript/subscript
+      [{ 'indent': '-1'}, { 'indent': '+1' }],          // outdent/indent
+      [{ 'direction': 'rtl' }],                         // text direction
+      [{ 'size': ['small', false, 'large', 'huge'] }],  // custom dropdown
+      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+      [{ 'color': [] }, { 'background': [] }],          // dropdown with defaults from theme
+      [{ 'font': [] }],
+      [{ 'align': [] }],
+      ['clean'],                                         // remove formatting button
+      ['link', 'image']                                 // link and image, video
+    ]
+  };
 
   constructor(private compService: CompService, private fb: FormBuilder, private cdr: ChangeDetectorRef) {
     this.componentForm = this.fb.group({
@@ -416,6 +441,21 @@ export class Components implements OnInit {
     return this.components.filter(comp => comp.category?.id === categoryId).length;
   }
 
+  // Helper method to strip HTML tags for display in table (if needed)
+  stripHtml(html: string): string {
+    if (!html) return '';
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '';
+  }
+
+  // Helper method to truncate rich text content for table display
+  truncateHtml(html: string, maxLength: number = 150): string {
+    if (!html) return '';
+    const text = this.stripHtml(html);
+    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+  }
+
   // TrackBy functions for better performance and immediate updates
   trackByComponentId(index: number, component: LabComponent): number {
     return component.id;
@@ -423,5 +463,19 @@ export class Components implements OnInit {
 
   trackByCategoryId(index: number, category: Category): number {
     return category.id;
+  }
+
+  // ===== DETAILS VIEW METHODS =====
+
+  viewDetails(component: LabComponent) {
+    this.detailsComponent = component;
+    this.showDetailsModal = true;
+    this.forceUpdate();
+  }
+
+  closeDetailsModal() {
+    this.showDetailsModal = false;
+    this.detailsComponent = null;
+    this.forceUpdate();
   }
 }

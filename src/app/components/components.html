@@ -81,7 +81,17 @@
                                         {{ comp.in_stock }}
                                     </span>
                                 </td>
-                                <td>{{ comp.description || '-' }}</td>
+                                <td>
+                                    <div class="rich-text-preview" [innerHTML]="truncateHtml(comp.description, 100)" 
+                                         *ngIf="comp.description"></div>
+                                    <span *ngIf="!comp.description" class="text-muted">-</span>
+                                    <button *ngIf="comp.description && stripHtml(comp.description).length > 100" 
+                                            class="btn btn-sm btn-link p-0 ms-1" 
+                                            (click)="viewDetails(comp)"
+                                            title="View full details">
+                                        <i class="fas fa-expand-alt"></i>
+                                    </button>
+                                </td>
                                 <td>
                                     <div class="btn-group" role="group">
                                         <button class="btn btn-sm btn-outline-primary" (click)="editComponent(comp)" title="Edit">
@@ -178,20 +188,32 @@
 
                             <div class="mb-3">
                                 <label class="form-label">Description</label>
-                                <textarea class="form-control" formControlName="description" rows="3" 
-                                          placeholder="Brief description of the component"></textarea>
+                                <quill-editor 
+                                    formControlName="description" 
+                                    [modules]="quillConfig"
+                                    placeholder="Brief description of the component"
+                                    class="bg-white">
+                                </quill-editor>
                             </div>
                             
                             <div class="mb-3">
                                 <label class="form-label">Overview</label>
-                                <textarea class="form-control" formControlName="overview" rows="4" 
-                                          placeholder="Detailed overview of the component's features and capabilities"></textarea>
+                                <quill-editor 
+                                    formControlName="overview" 
+                                    [modules]="quillConfig"
+                                    placeholder="Detailed overview of the component's features and capabilities"
+                                    class="bg-white">
+                                </quill-editor>
                             </div>
                             
                             <div class="mb-3">
-                                <label class="form-label">Specification</label>
-                                <textarea class="form-control" formControlName="specification" rows="4" 
-                                          placeholder="Technical specifications, dimensions, requirements, etc."></textarea>
+                                <label class="form-label">Technical Specification</label>
+                                <quill-editor 
+                                    formControlName="specification" 
+                                    [modules]="quillConfig"
+                                    placeholder="Technical specifications, dimensions, requirements, etc."
+                                    class="bg-white">
+                                </quill-editor>
                             </div>
 
                             <!-- Form Actions -->
@@ -224,7 +246,9 @@
                         <tbody>
                             <tr *ngFor="let cat of categories; trackBy: trackByCategoryId">
                                 <td><strong>{{ cat.name }}</strong></td>
-                                <td>{{ cat.description || '-' }}</td>
+                                <td>
+                                    <div [innerHTML]="cat.description || '-'" class="rich-text-display"></div>
+                                </td>
                                 <td>
                                     <span class="badge bg-info">
                                         {{ getComponentCountForCategory(cat.id) }}
@@ -269,8 +293,12 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Description</label>
-                                <textarea class="form-control" formControlName="description" rows="3" 
-                                          placeholder="Brief description of this category"></textarea>
+                                <quill-editor 
+                                    formControlName="description" 
+                                    [modules]="quillConfig"
+                                    placeholder="Brief description of this category"
+                                    class="bg-white">
+                                </quill-editor>
                             </div>
                             
                             <!-- Form Actions -->
@@ -286,6 +314,94 @@
                     </div>
                 </div>
             </ng-container>
+        </div>
+
+        <!-- Component Details Modal -->
+        <div *ngIf="showDetailsModal && detailsComponent" class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-microchip me-2"></i>
+                            {{ detailsComponent.title }}
+                        </h5>
+                        <button type="button" class="btn-close" (click)="closeDetailsModal()"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Component Image -->
+                        <div *ngIf="detailsComponent.feature" class="text-center mb-4">
+                            <img [src]="detailsComponent.feature" [alt]="detailsComponent.title" 
+                                 class="img-fluid rounded border" style="max-height: 200px;">
+                        </div>
+
+                        <!-- Component Basic Info -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <strong>Category:</strong>
+                                <span class="badge bg-secondary ms-2">{{ detailsComponent.category?.name || 'No Category' }}</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Stock:</strong>
+                                <span class="badge ms-2" [class]="detailsComponent.in_stock > 0 ? 'bg-success' : 'bg-danger'">
+                                    {{ detailsComponent.in_stock }} available
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div *ngIf="detailsComponent.description" class="mb-4">
+                            <h6 class="fw-bold text-primary">
+                                <i class="fas fa-align-left me-2"></i>Description
+                            </h6>
+                            <div class="card">
+                                <div class="card-body">
+                                    <div [innerHTML]="detailsComponent.description" class="rich-text-content"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Overview -->
+                        <div *ngIf="detailsComponent.overview" class="mb-4">
+                            <h6 class="fw-bold text-primary">
+                                <i class="fas fa-eye me-2"></i>Overview
+                            </h6>
+                            <div class="card">
+                                <div class="card-body">
+                                    <div [innerHTML]="detailsComponent.overview" class="rich-text-content"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Technical Specifications -->
+                        <div *ngIf="detailsComponent.specification" class="mb-4">
+                            <h6 class="fw-bold text-primary">
+                                <i class="fas fa-cogs me-2"></i>Technical Specifications
+                            </h6>
+                            <div class="card">
+                                <div class="card-body">
+                                    <div [innerHTML]="detailsComponent.specification" class="rich-text-content"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Meta Information -->
+                        <div class="row text-muted small">
+                            <div class="col-md-6">
+                                <strong>Created:</strong> {{ detailsComponent.created_at | date:'medium' }}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Component ID:</strong> #{{ detailsComponent.id }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" (click)="editComponent(detailsComponent)">
+                            <i class="fas fa-edit me-2"></i>Edit Component
+                        </button>
+                        <button type="button" class="btn btn-secondary" (click)="closeDetailsModal()">Close</button>
+                    </div>
+                </div>
+            </div>
         </div>
         </div>
 
