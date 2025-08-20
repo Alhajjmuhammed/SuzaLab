@@ -5,7 +5,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { QuillModule } from 'ngx-quill';
 import { Dashboard } from '../dashboard/dashboard';
 import { CompService } from '../services/comp-service';
-import { Category, Component as LabComponent, CodeExplanation } from '../models/component.model';
+import { Category, Component as LabComponent, CodeExplanation, ComponentApplication } from '../models/component.model';
 
 @Component({
   selector: 'app-components',
@@ -17,7 +17,7 @@ import { Category, Component as LabComponent, CodeExplanation } from '../models/
 })
 export class Components implements OnInit {
   // Tab state
-  activeTab: 'components' | 'categories' | 'code' = 'components';
+  activeTab: 'components' | 'categories' | 'code' | 'applications' = 'components';
   
   // Category form and state
   showCategoryForm = false;
@@ -46,6 +46,10 @@ export class Components implements OnInit {
   selectedCodeExplanation: CodeExplanation | null = null;
   codeForm: FormGroup;
   selectedComponentForCode: LabComponent | null = null;
+  
+  // Applications management
+  applications: ComponentApplication[] = [];
+  selectedApplication: ComponentApplication | null = null;
   
   // File upload properties
   selectedFile: File | null = null;
@@ -111,13 +115,15 @@ export class Components implements OnInit {
     this.loadCategories();
   }
 
-  setActiveTab(tab: 'components' | 'categories' | 'code') {
+  setActiveTab(tab: 'components' | 'categories' | 'code' | 'applications') {
     this.activeTab = tab;
     this.cancelForm();
     this.cancelCategoryForm();
     this.cancelCodeForm();
     if (tab === 'code') {
       this.loadCodeExplanations();
+    } else if (tab === 'applications') {
+      this.loadApplications();
     }
     this.forceUpdate(); // Force immediate update
   }
@@ -533,8 +539,6 @@ export class Components implements OnInit {
   }
 
   addCodeExplanation(component?: LabComponent) {
-    console.log('addCodeExplanation called with component:', component);
-    
     // Reset form state first
     this.codeForm.reset();
     this.isEditCode = false;
@@ -551,9 +555,6 @@ export class Components implements OnInit {
     // Now show the form
     this.showCodeForm = true;
     
-    console.log('showCodeForm set to:', this.showCodeForm);
-    console.log('activeTab set to:', this.activeTab);
-    
     // Enable the component_id field when adding new code
     this.codeForm.get('component_id')?.enable();
     
@@ -561,7 +562,6 @@ export class Components implements OnInit {
       this.codeForm.patchValue({
         component_id: component.id
       });
-      console.log('Form patched with component_id:', component.id);
     }
     this.forceUpdate();
   }
@@ -664,8 +664,152 @@ export class Components implements OnInit {
     return this.components.find(c => c.id === componentId) || null;
   }
 
+  // ===== APPLICATIONS MANAGEMENT METHODS =====
+  
+  loadApplications() {
+    this.applications = [];
+    this.loading = true;
+    
+    this.compService.getApplications().subscribe({
+      next: (applications) => {
+        this.applications = applications;
+        this.forceUpdate();
+      },
+      error: (err) => {
+        console.error('Error loading applications:', err);
+        this.showError('Failed to load applications');
+      },
+      complete: () => {
+        this.loading = false;
+        this.forceUpdate();
+      }
+    });
+  }
+
+  approveApplication(application: ComponentApplication) {
+    const studentName = this.getStudentDisplayName(application.student);
+    const componentTitle = application.component?.title || 'Unknown Component';
+    if (!confirm(`Approve application by ${studentName} for ${componentTitle}?`)) return;
+    
+    const updateData = {
+      pending: false,
+      on_progress: true,
+      enrolled: true,
+      issued_at: new Date().toISOString()
+    };
+    
+    this.compService.updateApplication(application.id, updateData).subscribe({
+      next: (updated) => {
+        this.showSuccess('Application approved successfully');
+        const index = this.applications.findIndex(a => a.id === application.id);
+        if (index !== -1) {
+          this.applications[index] = updated;
+        }
+        this.forceUpdate();
+      },
+      error: (err) => {
+        console.error('Error approving application:', err);
+        this.showError('Failed to approve application');
+      }
+    });
+  }
+
+  rejectApplication(application: ComponentApplication) {
+    const studentName = this.getStudentDisplayName(application.student);
+    const componentTitle = application.component?.title || 'Unknown Component';
+    if (!confirm(`Reject application by ${studentName} for ${componentTitle}?`)) return;
+    
+    this.compService.deleteApplication(application.id).subscribe({
+      next: () => {
+        this.showSuccess('Application rejected and removed');
+        this.applications = this.applications.filter(a => a.id !== application.id);
+        this.forceUpdate();
+      },
+      error: (err) => {
+        console.error('Error rejecting application:', err);
+        this.showError('Failed to reject application');
+      }
+    });
+  }
+
+  markAsCompleted(application: ComponentApplication) {
+    if (!confirm(`Mark application as completed and returned by ${this.getStudentDisplayName(application.student)}?`)) return;
+    
+    const updateData = {
+      on_progress: false,
+      return_day: true,
+      updated_at: new Date().toISOString()
+    };
+    
+    this.compService.updateApplication(application.id, updateData).subscribe({
+      next: (updated) => {
+        this.showSuccess('Application marked as completed');
+        const index = this.applications.findIndex(a => a.id === application.id);
+        if (index !== -1) {
+          this.applications[index] = updated;
+        }
+        this.forceUpdate();
+      },
+      error: (err) => {
+        console.error('Error updating application:', err);
+        this.showError('Failed to update application');
+      }
+    });
+  }
+
+  getStudentDisplayName(student?: ComponentApplication['student']): string {
+    if (student?.user) {
+      const firstName = student.user.first_name || '';
+      const lastName = student.user.last_name || '';
+      const fullName = `${firstName} ${lastName}`.trim();
+      return fullName || student.user.username || student.user.email || 'Unknown Student';
+    }
+    return 'Unknown Student';
+  }
+
+  getApplicationStatus(application: ComponentApplication): string {
+    if (application.pending) return 'Pending Approval';
+    if (application.on_progress && !application.return_day) return 'In Progress';
+    if (application.return_day) return 'Completed';
+    if (application.overdue) return 'Overdue';
+    return 'Unknown';
+  }
+
+  getApplicationStatusClass(application: ComponentApplication): string {
+    if (application.pending) return 'badge bg-warning text-dark';
+    if (application.on_progress && !application.return_day) return 'badge bg-primary';
+    if (application.return_day) return 'badge bg-success';
+    if (application.overdue) return 'badge bg-danger';
+    return 'badge bg-secondary';
+  }
+
+  formatApplicationDate(dateString?: string): string {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
   // TrackBy function for code explanations
   trackByCodeId(index: number, code: CodeExplanation): number {
     return code.id;
+  }
+
+  // TrackBy function for applications
+  trackByApplicationId(index: number, application: ComponentApplication): number {
+    return application.id;
+  }
+
+  // Helper method to display purpose in user-friendly format
+  getPurposeDisplay(purpose: string): string {
+    const purposeMap: { [key: string]: string } = {
+      'field': 'Field Work',
+      'training': 'Training'
+    };
+    return purposeMap[purpose] || purpose;
   }
 }

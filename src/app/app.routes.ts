@@ -8,11 +8,15 @@ import { Courses } from './courses/courses';
 import { Dashboard } from './dashboard/dashboard';
 import { AuthGuard } from './guards/auth.guard';
 import { ManageUsers } from './manage-users/manage-users';
+import { MyApplications } from './my-applications/my-applications';
+import { ViewComponents } from './view-components/view-components';
 
 export const routes: Routes = [
     { path: '', component: Login },
     { path: 'login', component: Login },
     { path: 'home', component: Home, canActivate: [AuthGuard] },
+    { path: 'my-application', component: MyApplications, canActivate: [AuthGuard] },
+    { path: 'view-components', component: ViewComponents, canActivate: [AuthGuard] },
     { path: 'manage-users', component: ManageUsers, canActivate: [AuthGuard] },
     { path: 'dashboard', component: Dashboard, canActivate: [AuthGuard] },
     { path: 'components', component: Components, canActivate: [AuthGuard] },

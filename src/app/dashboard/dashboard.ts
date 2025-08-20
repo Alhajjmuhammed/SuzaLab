@@ -33,6 +33,19 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     this.isBrowser = isPlatformBrowser(this.platformId);
   }
 
+  // Helper methods for template
+  hasAdminPrivileges(): boolean {
+    return this.authService.hasAdminPrivileges();
+  }
+
+  isStudent(): boolean {
+    return this.authService.isStudent();
+  }
+
+  getUserRole(): string {
+    return this.authService.getUserRole();
+  }
+
   ngOnInit(): void {
     // Get current user information
     this.currentUser = this.authService.getUser();

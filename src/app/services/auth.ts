@@ -140,6 +140,42 @@ export class Auth {
     return null;
   }
 
+  // Helper method to check if user has admin privileges (admin or super)
+  hasAdminPrivileges(): boolean {
+    const user = this.getUser();
+    if (!user) return false;
+    
+    // Handle both string and object role formats
+    const roleName = typeof user.role === 'string' 
+      ? user.role.toLowerCase() 
+      : user.role?.role_name?.toLowerCase();
+    
+    return roleName === 'admin' || roleName === 'super';
+  }
+
+  // Helper method to check if user is student
+  isStudent(): boolean {
+    const user = this.getUser();
+    if (!user) return false;
+    
+    // Handle both string and object role formats
+    const roleName = typeof user.role === 'string' 
+      ? user.role.toLowerCase() 
+      : user.role?.role_name?.toLowerCase();
+    
+    return roleName === 'student';
+  }
+
+  // Helper method to get role name regardless of format
+  getUserRole(): string {
+    const user = this.getUser();
+    if (!user) return '';
+    
+    return typeof user.role === 'string' 
+      ? user.role 
+      : user.role?.role_name || '';
+  }
+
   logout(): void {
     // Clear local storage (only in browser)
     if (this.isBrowser) {

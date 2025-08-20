@@ -30,9 +30,23 @@ export interface CodeExplanation {
 
 export interface ComponentApplication {
   id: number;
-  student: any; // Replace with Student interface if available
+  student?: {
+    id: number;
+    user?: {
+      id: number;
+      username: string;
+      email: string;
+      first_name?: string;
+      last_name?: string;
+    };
+    course?: {
+      id: number;
+      course_name: string;
+    };
+    year_of_study?: number;
+  };
   student_id?: number;
-  component: Component;
+  component?: Component;
   component_id?: number;
   qty: number;
   purpose: string;

@@ -1,0 +1,344 @@
+<app-dashboard>
+    <div class="mainContent">
+        <!-- Professional Page Header -->
+        <div class="page-header">
+            <div class="breadcrumb-section">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a routerLink="/home"><i class="fas fa-home me-1"></i>Dashboard</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">View Components</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="page-title-section">
+                <h1 class="page-title">
+                    <i class="fas fa-microchip me-2"></i>Lab Components
+                </h1>
+                <p class="page-subtitle">Browse and request lab components for your projects</p>
+            </div>
+        </div>
+
+        <!-- Alert Messages -->
+        <div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+            <button type="button" class="btn-close" (click)="error = null"></button>
+        </div>
+        
+        <div *ngIf="success" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>{{ success }}
+            <button type="button" class="btn-close" (click)="success = null"></button>
+        </div>
+
+        <!-- Search and Filter Section -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Search Components</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" placeholder="Search by name, description..." 
+                                   (input)="onSearchChange($event)">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Filter by Category</label>
+                        <select class="form-select" (change)="onCategoryChange($event)">
+                            <option value="">All Categories</option>
+                            <option *ngFor="let category of categories" [value]="category.id">
+                                {{ category.name }}
+                            </option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="loading" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading components...</span>
+            </div>
+            <div class="mt-2">Loading available components...</div>
+        </div>
+
+        <!-- Components Grid -->
+        <div *ngIf="!loading" class="row">
+            <div class="col-lg-4 col-md-6 mb-4" *ngFor="let component of filteredComponents; trackBy: trackByComponentId">
+                <div class="card component-card h-100">
+                    <!-- Component Image -->
+                    <div class="component-image-container">
+                        <img [src]="component.feature || 'assets/images/default-component.jpg'" 
+                             [alt]="component.title" 
+                             class="card-img-top component-image"
+                             (error)="onImageError($event)">
+                        <div class="stock-badge" [class.in-stock]="component.in_stock > 0" [class.out-of-stock]="component.in_stock === 0">
+                            <i class="fas fa-cube me-1"></i>{{ component.in_stock }} in stock
+                        </div>
+                    </div>
+                    
+                    <div class="card-body d-flex flex-column">
+                        <!-- Component Header -->
+                        <div class="component-header mb-3">
+                            <h5 class="card-title">{{ component.title }}</h5>
+                            <span class="badge bg-secondary">{{ component.category?.name || 'No Category' }}</span>
+                        </div>
+
+                        <!-- Component Description -->
+                        <div class="component-description mb-3 flex-grow-1">
+                            <p class="card-text text-muted" *ngIf="component.description">
+                                {{ component.description.length > 100 ? (component.description.substring(0, 100) + '...') : component.description }}
+                            </p>
+                            <p class="card-text text-muted" *ngIf="!component.description">
+                                No description available
+                            </p>
+                        </div>
+
+                        <!-- Component Overview (if available) -->
+                        <div class="component-overview mb-3" *ngIf="component.overview">
+                            <small class="text-muted">
+                                <strong>Overview:</strong>
+                                <div [innerHTML]="component.overview" class="overview-content"></div>
+                            </small>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="mt-auto">
+                            <div class="d-grid gap-2">
+                                <div class="d-flex gap-2">
+                                    <button *ngIf="hasArduinoCode(component)" 
+                                            class="btn btn-outline-info flex-fill" 
+                                            (click)="viewArduinoCode(component)"
+                                            title="View Arduino Code">
+                                        <i class="fas fa-code me-1"></i>Code
+                                    </button>
+                                    <button class="btn btn-primary flex-fill" 
+                                            [disabled]="component.in_stock === 0"
+                                            (click)="requestComponent(component)">
+                                        <i class="fas fa-paper-plane me-1"></i>
+                                        {{ component.in_stock > 0 ? 'Request' : 'Out of Stock' }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- No Components Message -->
+            <div class="col-12" *ngIf="filteredComponents.length === 0">
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No components found</h4>
+                    <p class="text-muted">Try adjusting your search criteria or filters</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Application Form Modal -->
+        <div class="modal fade show d-block" style="background-color: rgba(0,0,0,0.3);" *ngIf="showApplicationForm">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-paper-plane me-2"></i>Request Component
+                        </h5>
+                        <button type="button" class="btn-close" (click)="cancelApplication()"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Selected Component Info -->
+                        <div class="selected-component-info mb-4" *ngIf="selectedComponent">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <img [src]="selectedComponent.feature || 'assets/images/default-component.jpg'" 
+                                         [alt]="selectedComponent.title" 
+                                         class="img-fluid rounded"
+                                         (error)="onImageError($event)">
+                                </div>
+                                <div class="col-md-8">
+                                    <h6 class="fw-bold">{{ selectedComponent.title }}</h6>
+                                    <p class="text-muted small mb-1">{{ selectedComponent.category?.name || 'No Category' }}</p>
+                                    <p class="small">{{ selectedComponent.description }}</p>
+                                    <div class="stock-info">
+                                        <span class="badge bg-success">{{ selectedComponent.in_stock }} available</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Application Form -->
+                        <form [formGroup]="applicationForm" (ngSubmit)="submitApplication()">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Quantity Needed <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" formControlName="qty" 
+                                           min="1" [max]="selectedComponent?.in_stock || 10" 
+                                           placeholder="How many do you need?">
+                                    <div class="form-text">Max available: {{ selectedComponent?.in_stock || 0 }}</div>
+                                    <div *ngIf="applicationForm.get('qty')?.invalid && (applicationForm.get('qty')?.dirty || applicationForm.get('qty')?.touched)" 
+                                         class="text-danger small mt-1">
+                                        Please enter a valid quantity (1-{{ selectedComponent?.in_stock || 10 }})
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Duration (Days) <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" formControlName="how_many_date" 
+                                           min="1" max="30" placeholder="For how many days?">
+                                    <div class="form-text">Maximum 30 days</div>
+                                    <div *ngIf="applicationForm.get('how_many_date')?.invalid && (applicationForm.get('how_many_date')?.dirty || applicationForm.get('how_many_date')?.touched)" 
+                                         class="text-danger small mt-1">
+                                        Please enter a valid duration (1-30 days)
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Purpose <span class="text-danger">*</span></label>
+                                <select class="form-select" formControlName="purpose">
+                                    <option value="">Select purpose...</option>
+                                    <option value="field">Field</option>
+                                    <option value="training">Training</option>
+                                </select>
+                                <div class="form-text">Choose the purpose for using this component</div>
+                                <div *ngIf="applicationForm.get('purpose')?.invalid && (applicationForm.get('purpose')?.dirty || applicationForm.get('purpose')?.touched)" 
+                                     class="text-danger small mt-1">
+                                    Please select a purpose
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" formControlName="request_code" id="requestCode">
+                                    <label class="form-check-label" for="requestCode">
+                                        <i class="fas fa-code me-1"></i>Also request Arduino code examples
+                                    </label>
+                                    <div class="form-text">Get code examples and documentation for this component</div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" (click)="cancelApplication()" [disabled]="submitting">
+                            Cancel
+                        </button>
+                        <button type="button" class="btn btn-primary" (click)="submitApplication()" [disabled]="submitting || applicationForm.invalid">
+                            <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            <i *ngIf="!submitting" class="fas fa-paper-plane me-2"></i>
+                            {{ submitting ? 'Submitting...' : 'Submit Request' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</app-dashboard>
+
+<!-- Arduino Code Modal - Outside dashboard for proper z-index -->
+<div *ngIf="showCodeModal" class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.3);">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document" style="max-width: 95vw; height: 90vh;">
+        <div class="modal-content" style="height: 100%; background: #ffffff;">
+            <!-- Arduino IDE Header -->
+            <div class="modal-header" style="background: #f8f9fa; border-bottom: 1px solid #dee2e6; color: #212529;">
+                <h5 class="modal-title">
+                    <i class="fas fa-microchip me-2" style="color: #007bff;"></i>
+                    Arduino IDE - {{ selectedComponentCode?.title }}
+                </h5>
+                <button type="button" class="btn-close" (click)="closeCodeModal()"></button>
+            </div>
+            
+            <!-- Arduino IDE Body -->
+            <div class="modal-body p-0" style="height: calc(100% - 120px); background: #ffffff;">
+                <!-- Loading State -->
+                <div *ngIf="loadingCode" class="text-center py-5" style="color: #6c757d;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Loading Arduino code examples...</p>
+                    <button type="button" class="btn btn-sm btn-outline-secondary mt-2" (click)="closeCodeModal()">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                </div>
+
+                <!-- Arduino IDE Interface -->
+                <div *ngIf="!loadingCode && componentCodeExamples.length > 0" class="h-100 d-flex flex-column">
+                    <!-- IDE Toolbar -->
+                    <div class="arduino-toolbar d-flex align-items-center px-3 py-2" style="background: #f8f9fa; border-bottom: 1px solid #dee2e6; min-height: 40px;">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-file-code me-2" style="color: #007bff;"></i>
+                            <span style="color: #212529; font-size: 13px;">{{ selectedComponentCode?.title }}.ino</span>
+                        </div>
+                        <div class="ms-auto d-flex gap-2">
+                            <button class="btn btn-sm btn-primary" 
+                                    (click)="copyCodeToClipboard(componentCodeExamples[0] && componentCodeExamples[0].code ? componentCodeExamples[0].code : '')" 
+                                    title="Copy to clipboard">
+                                <i class="fas fa-copy me-1"></i>Copy
+                            </button>
+                            <button class="btn btn-sm btn-secondary" 
+                                    disabled title="Verify">
+                                <i class="fas fa-check-circle me-1"></i>Verify
+                            </button>
+                            <button class="btn btn-sm btn-secondary" 
+                                    disabled title="Upload">
+                                <i class="fas fa-arrow-right me-1"></i>Upload
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Code Editor Area -->
+                    <div class="flex-grow-1 d-flex" style="height: calc(100% - 40px);">
+                        <!-- Left Sidebar (Line Numbers) -->
+                        <div class="line-numbers font-monospace" style="background: #f8f9fa; width: 50px; padding: 10px 5px; color: #6c757d; font-size: 14px; line-height: 1.5; border-right: 1px solid #dee2e6; user-select: none;">
+                            <div *ngFor="let codeExample of componentCodeExamples; let exampleIndex = index">
+                                <div *ngIf="exampleIndex === 0" style="margin-bottom: 20px;">
+                                    <div *ngFor="let line of getCodeLines(codeExample.code || ''); let i = index" style="text-align: right; padding-right: 8px;">
+                                        {{ i + 1 }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Main Code Area -->
+                        <div class="flex-grow-1" style="background: #ffffff; padding: 15px; overflow-y: auto;">
+                            <div *ngFor="let codeExample of componentCodeExamples; let exampleIndex = index">
+                                <!-- Code Section -->
+                                <div *ngIf="exampleIndex === 0" class="mb-4">
+                                    <pre class="font-monospace" style="background: transparent; border: none; color: #212529; font-size: 14px; line-height: 1.5; margin: 0; white-space: pre-wrap; word-wrap: break-word;"><code [innerHTML]="highlightArduinoCode(codeExample.code || '')"></code></pre>
+                                </div>
+
+                                <!-- Additional Examples as Comments -->
+                                <div *ngIf="exampleIndex > 0" class="mb-4">
+                                    <div class="font-monospace" style="color: #6a9955; font-size: 14px; line-height: 1.5; margin: 20px 0;">
+                                        // ====== Additional Example {{ exampleIndex + 1 }} ======
+                                    </div>
+                                    <div *ngIf="codeExample.description" class="font-monospace" style="color: #6a9955; font-size: 14px; line-height: 1.5; margin-bottom: 10px;">
+                                        // {{ stripHtml(codeExample.description) }}
+                                    </div>
+                                    <pre class="font-monospace" style="background: transparent; border: none; color: #212529; font-size: 14px; line-height: 1.5; margin: 0; white-space: pre-wrap; word-wrap: break-word;"><code [innerHTML]="highlightArduinoCode(codeExample.code || '')"></code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- No Code Examples -->
+                <div *ngIf="!loadingCode && componentCodeExamples.length === 0" class="text-center py-5" style="color: #6c757d;">
+                    <i class="fas fa-code fa-3x text-muted mb-3"></i>
+                    <h5>No Arduino Code Examples</h5>
+                    <p class="text-muted">This component doesn't have any Arduino code examples yet.</p>
+                </div>
+            </div>
+
+            <!-- Arduino IDE Footer -->
+            <div class="modal-footer" style="background: #f8f9fa; border-top: 1px solid #dee2e6;">
+                <div class="d-flex align-items-center w-100">
+                    <div class="me-auto" style="color: #6c757d; font-size: 11px;">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Arduino IDE (Light Theme) - {{ componentCodeExamples.length }} example(s) loaded
+                    </div>
+                    <button type="button" class="btn btn-secondary" (click)="closeCodeModal()">
+                        <i class="fas fa-times me-1"></i>Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

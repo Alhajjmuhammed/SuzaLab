@@ -1,0 +1,189 @@
+<app-dashboard>
+    <div class="mainContent">
+        <!-- Professional Page Header -->
+        <div class="page-header">
+            <div class="breadcrumb-section">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a routerLink="/home"><i class="fas fa-home me-1"></i>Dashboard</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">My Applications</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="page-title-section">
+                <h1 class="page-title">
+                    <i class="fas fa-file-alt me-2"></i>My Applications
+                </h1>
+                <p class="page-subtitle">Track the status of your component requests</p>
+            </div>
+        </div>
+
+        <!-- Alert Messages -->
+        <div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+            <button type="button" class="btn-close" (click)="error = null"></button>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="loading" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading your applications...</span>
+            </div>
+            <div class="mt-2">Loading your applications...</div>
+        </div>
+
+        <!-- Applications Content -->
+        <div *ngIf="!loading">
+            <!-- Quick Stats -->
+            <div class="row mb-4">
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="stat-card pending">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>{{ getPendingCount() }}</h3>
+                            <p>Pending</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="stat-card approved">
+                        <div class="stat-icon">
+                            <i class="fas fa-spinner"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>{{ getInProgressCount() }}</h3>
+                            <p>In Progress</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="stat-card completed">
+                        <div class="stat-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>{{ getCompletedCount() }}</h3>
+                            <p>Completed</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="stat-card total">
+                        <div class="stat-icon">
+                            <i class="fas fa-list"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>{{ applications.length }}</h3>
+                            <p>Total</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Applications List -->
+            <div class="applications-container">
+                <div class="row">
+                    <div class="col-12" *ngFor="let app of applications; trackBy: trackByApplicationId">
+                        <div class="application-card mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-8">
+                                            <h5 class="card-title mb-1">
+                                                <i class="fas fa-microchip me-2"></i>
+                                                {{ app.component?.title || 'Unknown Component' }}
+                                            </h5>
+                                            <small class="text-muted">
+                                                Category: {{ app.component?.category?.name || 'No Category' }}
+                                            </small>
+                                        </div>
+                                        <div class="col-md-4 text-md-end">
+                                            <span [class]="getApplicationStatusClass(app)">
+                                                <i [class]="getApplicationStatusIcon(app)" class="me-1"></i>
+                                                {{ getApplicationStatus(app) }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <!-- Application Details -->
+                                        <div class="col-md-8">
+                                            <div class="application-details">
+                                                <div class="detail-item">
+                                                    <strong>Purpose:</strong>
+                                                    <span class="text-muted">{{ getPurposeDisplay(app.purpose) }}</span>
+                                                </div>
+                                                <div class="detail-item">
+                                                    <strong>Quantity:</strong>
+                                                    <span class="badge bg-light text-dark">{{ app.qty }} units</span>
+                                                </div>
+                                                <div class="detail-item">
+                                                    <strong>Duration:</strong>
+                                                    <span class="badge bg-secondary">{{ app.how_many_date }} days</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Timeline and Status -->
+                                        <div class="col-md-4">
+                                            <div class="timeline">
+                                                <div class="timeline-item">
+                                                    <i class="fas fa-paper-plane text-primary"></i>
+                                                    <div>
+                                                        <strong>Requested</strong>
+                                                        <small class="d-block text-muted">{{ formatDate(app.requested_at) }}</small>
+                                                    </div>
+                                                </div>
+                                                <div class="timeline-item" *ngIf="app.issued_at">
+                                                    <i class="fas fa-check text-success"></i>
+                                                    <div>
+                                                        <strong>Approved & Issued</strong>
+                                                        <small class="d-block text-muted">{{ formatDate(app.issued_at) }}</small>
+                                                    </div>
+                                                </div>
+                                                <div class="timeline-item" *ngIf="app.return_day">
+                                                    <i class="fas fa-undo text-info"></i>
+                                                    <div>
+                                                        <strong>Returned</strong>
+                                                        <small class="d-block text-muted">{{ formatDate(app.updated_at) }}</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Due Date Info (for approved items) -->
+                                            <div *ngIf="app.on_progress && !app.return_day && getDaysRemaining(app) !== null" 
+                                                 class="due-date-info mt-3">
+                                                <div class="alert alert-info py-2 px-3 mb-0">
+                                                    <small>
+                                                        <i class="fas fa-calendar-alt me-1"></i>
+                                                        <strong>{{ getDaysRemainingText(app) }}</strong>
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- No Applications Message -->
+                    <div class="col-12" *ngIf="applications.length === 0">
+                        <div class="empty-state text-center py-5">
+                            <i class="fas fa-file-alt fa-4x text-muted mb-3"></i>
+                            <h4 class="text-muted">No Applications Yet</h4>
+                            <p class="text-muted mb-4">You haven't submitted any component requests yet.</p>
+                            <a routerLink="/view-components" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Browse Components
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</app-dashboard>
+

@@ -20,22 +20,32 @@
           <a class="nav-link" routerLink="/home" routerLinkActive="active">
             <i class="fas fa-home"></i><span class="nav-name">Dashboard</span>
           </a>
-          <a class="nav-link" routerLink="/manage-users" routerLinkActive="active">
-            <i class="fas fa-users-cog"></i
-            ><span class="nav-name">Manage Users</span>
-          </a>
-          <a class="nav-link" routerLink="/components" routerLinkActive="active">
-            <i class="fas fa-microchip"></i
-            ><span class="nav-name">Components</span>
-          </a>
-          <a class="nav-link" routerLink="/programs" routerLinkActive="active">
-            <i class="fas fa-code"></i
-            ><span class="nav-name">Programs</span>
-          </a>
-          <a class="nav-link" routerLink="/courses" routerLinkActive="active">
-            <i class="fas fa-graduation-cap"></i
-            ><span class="nav-name">Courses</span>
-          </a>
+          
+          <!-- Student Navigation -->
+          <ng-container *ngIf="isStudent()">
+            <a class="nav-link" routerLink="/view-components" routerLinkActive="active">
+              <i class="fas fa-microchip"></i><span class="nav-name">View Components</span>
+            </a>
+            <a class="nav-link" routerLink="/my-application" routerLinkActive="active">
+              <i class="fas fa-file-alt"></i><span class="nav-name">My Applications</span>
+            </a>
+          </ng-container>
+          
+          <!-- Admin & Super Admin Navigation -->
+          <ng-container *ngIf="hasAdminPrivileges()">
+            <a class="nav-link" routerLink="/manage-users" routerLinkActive="active">
+              <i class="fas fa-users-cog"></i><span class="nav-name">Manage Users</span>
+            </a>
+            <a class="nav-link" routerLink="/components" routerLinkActive="active">
+              <i class="fas fa-microchip"></i><span class="nav-name">Components</span>
+            </a>
+            <a class="nav-link" routerLink="/programs" routerLinkActive="active">
+              <i class="fas fa-code"></i><span class="nav-name">Programs</span>
+            </a>
+            <a class="nav-link" routerLink="/courses" routerLinkActive="active">
+              <i class="fas fa-graduation-cap"></i><span class="nav-name">Courses</span>
+            </a>
+          </ng-container>
           
 
           <!-- Logout at Bottom -->
@@ -81,7 +91,7 @@
                 <div class="user-info-box user-dropdown-toggle" #userDropdownToggle (click)="toggleUserDropdown($event)">
                   <div class="user-details">
                     <span class="user-name">{{ currentUser?.first_name || 'User' }} {{ currentUser?.last_name || '' }}</span>
-                    <span class="user-role">{{ currentUser?.role || 'User' }}</span>
+                    <span class="user-role">{{ getUserRole() || 'User' }}</span>
                   </div>
                   <i class="fas fa-user-circle user-icon"></i>
                   <i
@@ -97,7 +107,7 @@
                   <div class="user-dropdown-item user-details-full">
                     <div><strong>{{ currentUser?.username || 'N/A' }}</strong></div>
                     <div><small>{{ currentUser?.email || 'N/A' }}</small></div>
-                    <div><small>Role: {{ currentUser?.role || 'User' }}</small></div>
+                    <div><small>Role: {{ getUserRole() || 'User' }}</small></div>
                     <div *ngIf="currentUser?.user_type"><small>Type: {{ currentUser?.user_type }}</small></div>
                   </div>
                   <div class="user-dropdown-divider"></div>

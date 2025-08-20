@@ -30,6 +30,11 @@
                     <i class="fas fa-code me-2"></i>Arduino Code
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" [class.active]="activeTab === 'applications'" (click)="setActiveTab('applications')" type="button" role="tab">
+                    <i class="fas fa-file-alt me-2"></i>Applications
+                </button>
+            </li>
         </ul>
 
         <!-- Add Button (per tab) -->
@@ -201,34 +206,61 @@
                                 </div>
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">Description</label>
-                                <quill-editor 
-                                    formControlName="description" 
-                                    [modules]="quillConfig"
-                                    placeholder="Brief description of the component"
-                                    class="bg-white">
-                                </quill-editor>
+                            <!-- Description Section -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-primary">
+                                    <i class="fas fa-info-circle me-2"></i>Description
+                                </label>
+                                <div class="editor-container w-100">
+                                    <quill-editor 
+                                        formControlName="description" 
+                                        [modules]="quillConfig"
+                                        placeholder="Brief description of the component"
+                                        class="bg-white border rounded w-100">
+                                    </quill-editor>
+                                </div>
+                                <div class="form-text mt-2">
+                                    <i class="fas fa-lightbulb me-1 text-primary"></i>
+                                    Provide a brief description of what this component is and its purpose
+                                </div>
                             </div>
                             
-                            <div class="mb-3">
-                                <label class="form-label">Overview</label>
-                                <quill-editor 
-                                    formControlName="overview" 
-                                    [modules]="quillConfig"
-                                    placeholder="Detailed overview of the component's features and capabilities"
-                                    class="bg-white">
-                                </quill-editor>
+                            <!-- Overview Section -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-primary">
+                                    <i class="fas fa-eye me-2"></i>Overview
+                                </label>
+                                <div class="editor-container w-100">
+                                    <quill-editor 
+                                        formControlName="overview" 
+                                        [modules]="quillConfig"
+                                        placeholder="Detailed overview of the component's features and capabilities"
+                                        class="bg-white border rounded w-100">
+                                    </quill-editor>
+                                </div>
+                                <div class="form-text mt-2">
+                                    <i class="fas fa-list-ul me-1 text-primary"></i>
+                                    Detailed overview of features, capabilities, and use cases
+                                </div>
                             </div>
                             
-                            <div class="mb-3">
-                                <label class="form-label">Technical Specification</label>
-                                <quill-editor 
-                                    formControlName="specification" 
-                                    [modules]="quillConfig"
-                                    placeholder="Technical specifications, dimensions, requirements, etc."
-                                    class="bg-white">
-                                </quill-editor>
+                            <!-- Technical Specification Section -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-primary">
+                                    <i class="fas fa-cogs me-2"></i>Technical Specification
+                                </label>
+                                <div class="editor-container w-100">
+                                    <quill-editor 
+                                        formControlName="specification" 
+                                        [modules]="quillConfig"
+                                        placeholder="Technical specifications, dimensions, requirements, etc."
+                                        class="bg-white border rounded w-100">
+                                    </quill-editor>
+                                </div>
+                                <div class="form-text mt-2">
+                                    <i class="fas fa-wrench me-1 text-primary"></i>
+                                    Technical specifications, dimensions, voltage ratings, etc.
+                                </div>
                             </div>
 
                             <!-- Form Actions -->
@@ -413,24 +445,43 @@
                                 </div>
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">Description <span class="text-danger">*</span></label>
-                                <quill-editor 
-                                    formControlName="description" 
-                                    [modules]="quillConfig"
-                                    placeholder="Describe what this Arduino code does, how to use it, wiring instructions, etc."
-                                    class="bg-white">
-                                </quill-editor>
+                            <!-- Description Section -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-primary">
+                                    <i class="fas fa-info-circle me-2"></i>Description <span class="text-danger">*</span>
+                                </label>
+                                <div class="description-editor-container">
+                                    <quill-editor 
+                                        formControlName="description" 
+                                        [modules]="quillConfig"
+                                        placeholder="Describe what this Arduino code does, how to use it, wiring instructions, etc."
+                                        class="bg-white border rounded">
+                                    </quill-editor>
+                                </div>
                                 <div *ngIf="codeForm.get('description')?.invalid && (codeForm.get('description')?.dirty || codeForm.get('description')?.touched)" 
-                                     class="text-danger small mt-1">
-                                    Description is required
+                                     class="text-danger small mt-2">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>Description is required
+                                </div>
+                                <div class="form-text mt-2">
+                                    <i class="fas fa-lightbulb me-1 text-warning"></i>
+                                    Provide a clear explanation of what this code does and how to implement it
                                 </div>
                             </div>
                             
-                            <div class="mb-3">
-                                <label class="form-label">Arduino Code <span class="text-danger">*</span></label>
-                                <textarea class="form-control font-monospace" formControlName="code" rows="15" 
-                                          placeholder="// Paste your Arduino code here
+                            <!-- Arduino Code Section -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-success">
+                                    <i class="fas fa-code me-2"></i>Arduino Code <span class="text-danger">*</span>
+                                </label>
+                                <div class="code-editor-container border rounded">
+                                    <div class="code-header bg-light px-3 py-2 border-bottom">
+                                        <small class="text-muted">
+                                            <i class="fas fa-file-code me-1"></i>
+                                            Arduino Sketch (.ino file)
+                                        </small>
+                                    </div>
+                                    <textarea class="form-control font-monospace border-0" formControlName="code" rows="15" 
+                                              placeholder="// Paste your Arduino code here
 void setup() {
   // put your setup code here, to run once:
 }
@@ -438,13 +489,14 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
 }"
-                                          style="font-size: 0.9rem; line-height: 1.4;"></textarea>
-                                <div *ngIf="codeForm.get('code')?.invalid && (codeForm.get('code')?.dirty || codeForm.get('code')?.touched)" 
-                                     class="text-danger small mt-1">
-                                    Arduino code is required
+                                              style="font-size: 0.9rem; line-height: 1.4; resize: vertical;"></textarea>
                                 </div>
-                                <div class="form-text">
-                                    <i class="fas fa-info-circle me-1"></i>
+                                <div *ngIf="codeForm.get('code')?.invalid && (codeForm.get('code')?.dirty || codeForm.get('code')?.touched)" 
+                                     class="text-danger small mt-2">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>Arduino code is required
+                                </div>
+                                <div class="form-text mt-2">
+                                    <i class="fas fa-microchip me-1 text-info"></i>
                                     Paste your complete Arduino sketch (.ino file content) here
                                 </div>
                             </div>
@@ -549,6 +601,106 @@ void loop() {
                         <button type="button" class="btn btn-secondary" (click)="closeDetailsModal()">Close</button>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Applications Tab Content -->
+        <div *ngIf="activeTab === 'applications'" class="tab-pane fade show active">
+            
+            <!-- Loading state -->
+            <div *ngIf="loading" class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading applications...</span>
+                </div>
+                <div class="mt-2">Loading applications...</div>
+            </div>
+
+            <!-- Applications Table -->
+            <div *ngIf="!loading" class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Student</th>
+                            <th>Component</th>
+                            <th>Quantity</th>
+                            <th>Purpose</th>
+                            <th>Duration (Days)</th>
+                            <th>Status</th>
+                            <th>Requested</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let app of applications; trackBy: trackByApplicationId" class="align-middle">
+                            <td>
+                                <div class="fw-bold">{{ getStudentDisplayName(app.student) }}</div>
+                                <small class="text-muted">{{ app.student?.user?.email || 'No email' }}</small>
+                                <div *ngIf="app.student?.course" class="small text-info">
+                                    {{ app.student?.course?.course_name }} - Year {{ app.student?.year_of_study }}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="fw-bold">{{ app.component?.title || 'Unknown Component' }}</div>
+                                <small class="text-muted">{{ app.component?.category?.name || 'No Category' }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark fs-6">{{ app.qty }}</span>
+                            </td>
+                            <td>
+                                <div class="purpose-text" [title]="getPurposeDisplay(app.purpose)">
+                                    {{ getPurposeDisplay(app.purpose) }}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">{{ app.how_many_date }} days</span>
+                            </td>
+                            <td>
+                                <span [class]="getApplicationStatusClass(app)">
+                                    {{ getApplicationStatus(app) }}
+                                </span>
+                            </td>
+                            <td>
+                                <small>{{ formatApplicationDate(app.requested_at) }}</small>
+                                <div *ngIf="app.issued_at" class="small text-success">
+                                    Issued: {{ formatApplicationDate(app.issued_at) }}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <!-- Approve button (for pending applications) -->
+                                    <button *ngIf="app.pending" 
+                                            class="btn btn-sm btn-success" 
+                                            (click)="approveApplication(app)" 
+                                            title="Approve Application">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    
+                                    <!-- Mark as completed (for in-progress applications) -->
+                                    <button *ngIf="app.on_progress && !app.return_day" 
+                                            class="btn btn-sm btn-primary" 
+                                            (click)="markAsCompleted(app)" 
+                                            title="Mark as Completed">
+                                        <i class="fas fa-check-circle"></i>
+                                    </button>
+                                    
+                                    <!-- Reject button (for pending applications) -->
+                                    <button *ngIf="app.pending" 
+                                            class="btn btn-sm btn-danger" 
+                                            (click)="rejectApplication(app)" 
+                                            title="Reject Application">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr *ngIf="applications.length === 0">
+                            <td colspan="8" class="text-center text-muted py-4">
+                                <i class="fas fa-file-alt fa-2x mb-2"></i>
+                                <div>No applications found.</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
         </div>
