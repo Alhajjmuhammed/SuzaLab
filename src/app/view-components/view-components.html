@@ -58,7 +58,7 @@
 
         <!-- Components Grid -->
         <div *ngIf="!loading" class="row">
-            <div class="col-lg-4 col-md-6 mb-4" *ngFor="let component of filteredComponents; trackBy: trackByComponentId">
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-4" *ngFor="let component of filteredComponents; trackBy: trackByComponentId">
                 <div class="card component-card h-100">
                     <!-- Component Image -->
                     <div class="component-image-container">
@@ -71,17 +71,17 @@
                         </div>
                     </div>
                     
-                    <div class="card-body d-flex flex-column">
+                    <div class="card-body d-flex flex-column p-3">
                         <!-- Component Header -->
-                        <div class="component-header mb-3">
+                        <div class="component-header mb-2">
                             <h5 class="card-title">{{ component.title }}</h5>
                             <span class="badge bg-secondary">{{ component.category?.name || 'No Category' }}</span>
                         </div>
 
                         <!-- Component Description -->
-                        <div class="component-description mb-3 flex-grow-1">
+                        <div class="component-description mb-2 flex-grow-1">
                             <p class="card-text text-muted" *ngIf="component.description">
-                                {{ stripHtml(component.description).length > 100 ? (stripHtml(component.description).substring(0, 100) + '...') : stripHtml(component.description) }}
+                                {{ stripHtml(component.description).length > 80 ? (stripHtml(component.description).substring(0, 80) + '...') : stripHtml(component.description) }}
                             </p>
                             <p class="card-text text-muted" *ngIf="!component.description">
                                 No description available
@@ -89,7 +89,7 @@
                         </div>
 
                         <!-- Component Overview (if available) -->
-                        <div class="component-overview mb-2" *ngIf="component.overview">
+                        <div class="component-overview mb-1" *ngIf="component.overview">
                             <div class="info-title-card p-2 border rounded cursor-pointer" 
                                  style="background-color: #f8f9fa; border-color: #007bff !important;"
                                  (click)="showOverviewModal(component)">
@@ -100,7 +100,7 @@
                         </div>
 
                         <!-- Component Specification (if available) -->
-                        <div class="component-specification mb-3" *ngIf="component.specification">
+                        <div class="component-specification mb-2" *ngIf="component.specification">
                             <div class="info-title-card p-2 border rounded cursor-pointer" 
                                  style="background-color: #f8fff9; border-color: #28a745 !important;"
                                  (click)="showSpecificationModal(component)">
@@ -112,15 +112,15 @@
 
                         <!-- Action Buttons -->
                         <div class="mt-auto">
-                            <div class="d-grid gap-2">
-                                <div class="d-flex gap-2">
+                            <div class="d-grid gap-1">
+                                <div class="d-flex gap-1">
                                     <button *ngIf="hasArduinoCode(component)" 
-                                            class="btn btn-outline-info flex-fill" 
+                                            class="btn btn-outline-info flex-fill btn-sm" 
                                             (click)="viewArduinoCode(component)"
                                             title="View Arduino Code">
                                         <i class="fas fa-code me-1"></i>Code
                                     </button>
-                                    <button class="btn btn-primary flex-fill" 
+                                    <button class="btn btn-primary flex-fill btn-sm" 
                                             [disabled]="component.in_stock === 0"
                                             (click)="requestComponent(component)">
                                         <i class="fas fa-paper-plane me-1"></i>
