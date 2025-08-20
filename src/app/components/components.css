@@ -417,6 +417,134 @@
   color: #369970;
 }
 
+/* Arduino Code Styling */
+.code-preview {
+  max-width: 200px;
+}
+
+.code-preview pre {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.code-preview code {
+  color: #495057;
+  font-family: 'Courier New', 'Monaco', monospace;
+}
+
+/* Arduino code textarea styling */
+.font-monospace {
+  font-family: 'Courier New', 'Monaco', 'Consolas', monospace !important;
+}
+
+/* Arduino code form styling */
+.arduino-code-textarea {
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+  border: 1px solid #404040;
+  font-family: 'Courier New', 'Monaco', 'Consolas', monospace;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.arduino-code-textarea:focus {
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+  border-color: #44b78b;
+  box-shadow: 0 0 0 0.2rem rgba(68, 183, 139, 0.25);
+}
+
+/* Code syntax highlighting classes (basic) */
+.code-preview .keyword {
+  color: #569cd6;
+  font-weight: bold;
+}
+
+.code-preview .string {
+  color: #ce9178;
+}
+
+.code-preview .comment {
+  color: #6a9955;
+  font-style: italic;
+}
+
+.code-preview .number {
+  color: #b5cea8;
+}
+
+/* Tab enhancements */
+.nav-tabs .nav-link i {
+  opacity: 0.7;
+}
+
+.nav-tabs .nav-link.active i {
+  opacity: 1;
+}
+
+/* Component-code button styling */
+.btn-outline-info {
+  color: #0dcaf0;
+  border-color: #0dcaf0;
+}
+
+.btn-outline-info:hover {
+  background-color: #0dcaf0;
+  border-color: #0dcaf0;
+  color: #fff;
+}
+
+/* Arduino code card styling */
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  font-weight: 600;
+}
+
+/* Code form styling */
+.code-form-container {
+  background-color: #fafafa;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+/* Enhanced code preview in table */
+.table .code-preview {
+  font-size: 0.8rem;
+}
+
+.table .code-preview pre {
+  max-height: 60px;
+  overflow: hidden;
+  margin-bottom: 0;
+  background-color: #f1f3f4;
+  border: none;
+  padding: 0.25rem 0.5rem;
+}
+
+/* Rich text preview in code table */
+.rich-text-preview {
+  max-width: 250px;
+  font-size: 0.85rem;
+  line-height: 1.3;
+}
+
+.rich-text-preview p {
+  margin: 0 0 0.25rem 0;
+}
+
+.rich-text-preview p:last-child {
+  margin-bottom: 0;
+}
+
 /* Quill focus states */
 ::ng-deep .quill-editor.focused {
   border-color: #44b78b !important;

@@ -16,10 +16,19 @@
         <!-- Tabs Navigation -->
         <ul class="nav nav-tabs mb-4" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link" [class.active]="activeTab === 'components'" (click)="setActiveTab('components')" type="button" role="tab">Components</button>
+                <button class="nav-link" [class.active]="activeTab === 'components'" (click)="setActiveTab('components')" type="button" role="tab">
+                    <i class="fas fa-microchip me-2"></i>Components
+                </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" [class.active]="activeTab === 'categories'" (click)="setActiveTab('categories')" type="button" role="tab">Categories</button>
+                <button class="nav-link" [class.active]="activeTab === 'categories'" (click)="setActiveTab('categories')" type="button" role="tab">
+                    <i class="fas fa-tags me-2"></i>Categories
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" [class.active]="activeTab === 'code'" (click)="setActiveTab('code')" type="button" role="tab">
+                    <i class="fas fa-code me-2"></i>Arduino Code
+                </button>
             </li>
         </ul>
 
@@ -30,6 +39,9 @@
             </button>
             <button *ngIf="activeTab === 'categories'" class="btn btn-success" (click)="addCategory()">
                 <i class="fas fa-plus me-2"></i>Add Category
+            </button>
+            <button *ngIf="activeTab === 'code'" class="btn btn-success" (click)="addCodeExplanation()">
+                <i class="fas fa-plus me-2"></i>Add Arduino Code
             </button>
         </div>
 
@@ -96,6 +108,9 @@
                                     <div class="btn-group" role="group">
                                         <button class="btn btn-sm btn-outline-primary" (click)="editComponent(comp)" title="Edit">
                                             <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info" (click)="addCodeExplanation(comp)" title="Add Arduino Code">
+                                            <i class="fas fa-code"></i>
                                         </button>
                                         <button class="btn btn-sm btn-outline-danger" (click)="deleteComponent(comp)" title="Delete">
                                             <i class="fas fa-trash"></i>
@@ -308,6 +323,139 @@
                                 </button>
                                 <button type="submit" class="btn btn-success" [disabled]="categoryForm.invalid">
                                     {{ isEditCategory ? 'Update Category' : 'Create Category' }}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </ng-container>
+
+            <!-- Arduino Code Tab -->
+            <ng-container *ngIf="activeTab === 'code'">
+                <div class="table-responsive mb-4">
+                    <table class="table table-bordered table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Component</th>
+                                <th>Description</th>
+                                <th>Code Preview</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let code of codeExplanations; trackBy: trackByCodeId">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img *ngIf="code.component.feature" [src]="code.component.feature" 
+                                             [alt]="code.component.title" class="img-thumbnail me-2" 
+                                             style="width: 40px; height: 40px; object-fit: cover;">
+                                        <div>
+                                            <strong>{{ code.component.title }}</strong>
+                                            <div class="small text-muted">{{ code.component.category?.name || 'No Category' }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div [innerHTML]="truncateHtml(code.description || '', 100)" class="rich-text-preview"></div>
+                                </td>
+                                <td>
+                                    <div class="code-preview">
+                                        <pre><code>{{ (code.code || '').substring(0, 80) }}{{ (code.code || '').length > 80 ? '...' : '' }}</code></pre>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="small text-muted">{{ code.created_at | date:'short' }}</div>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-primary" (click)="editCodeExplanation(code)" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" (click)="deleteCodeExplanation(code)" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr *ngIf="codeExplanations.length === 0">
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    <i class="fas fa-code fa-2x mb-2"></i>
+                                    <div>No Arduino code found. <a href="#" (click)="addCodeExplanation()" class="text-decoration-none">Add your first Arduino code</a></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Add/Edit Arduino Code Form -->
+                <div *ngIf="showCodeForm" class="card mb-4">
+                    <div class="card-header">
+                        <strong>{{ isEditCode ? 'Edit' : 'Add' }} Arduino Code</strong>
+                    </div>
+                    <div class="card-body">
+                        <form [formGroup]="codeForm" (ngSubmit)="saveCodeExplanation()">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="mb-3">
+                                        <label class="form-label">Component <span class="text-danger">*</span></label>
+                                        <select class="form-select" formControlName="component_id">
+                                            <option [ngValue]="null">-- Select Component --</option>
+                                            <option *ngFor="let comp of components" [ngValue]="comp.id">
+                                                {{ comp.title }} ({{ comp.category?.name || 'No Category' }})
+                                            </option>
+                                        </select>
+                                        <div *ngIf="codeForm.get('component_id')?.invalid && (codeForm.get('component_id')?.dirty || codeForm.get('component_id')?.touched)" 
+                                             class="text-danger small mt-1">
+                                            Please select a component
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Description <span class="text-danger">*</span></label>
+                                <quill-editor 
+                                    formControlName="description" 
+                                    [modules]="quillConfig"
+                                    placeholder="Describe what this Arduino code does, how to use it, wiring instructions, etc."
+                                    class="bg-white">
+                                </quill-editor>
+                                <div *ngIf="codeForm.get('description')?.invalid && (codeForm.get('description')?.dirty || codeForm.get('description')?.touched)" 
+                                     class="text-danger small mt-1">
+                                    Description is required
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Arduino Code <span class="text-danger">*</span></label>
+                                <textarea class="form-control font-monospace" formControlName="code" rows="15" 
+                                          placeholder="// Paste your Arduino code here
+void setup() {
+  // put your setup code here, to run once:
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+}"
+                                          style="font-size: 0.9rem; line-height: 1.4;"></textarea>
+                                <div *ngIf="codeForm.get('code')?.invalid && (codeForm.get('code')?.dirty || codeForm.get('code')?.touched)" 
+                                     class="text-danger small mt-1">
+                                    Arduino code is required
+                                </div>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Paste your complete Arduino sketch (.ino file content) here
+                                </div>
+                            </div>
+
+                            <!-- Form Actions -->
+                            <div class="d-flex justify-content-end gap-2">
+                                <button type="button" class="btn btn-secondary" (click)="cancelCodeForm()">
+                                    Cancel
+                                </button>
+                                <button type="submit" class="btn btn-success" [disabled]="codeForm.invalid">
+                                    <i class="fas fa-code me-2"></i>{{ isEditCode ? 'Update Arduino Code' : 'Add Arduino Code' }}
                                 </button>
                             </div>
                         </form>

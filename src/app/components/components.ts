@@ -5,7 +5,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { QuillModule } from 'ngx-quill';
 import { Dashboard } from '../dashboard/dashboard';
 import { CompService } from '../services/comp-service';
-import { Category, Component as LabComponent } from '../models/component.model';
+import { Category, Component as LabComponent, CodeExplanation } from '../models/component.model';
 
 @Component({
   selector: 'app-components',
@@ -17,7 +17,7 @@ import { Category, Component as LabComponent } from '../models/component.model';
 })
 export class Components implements OnInit {
   // Tab state
-  activeTab: 'components' | 'categories' = 'components';
+  activeTab: 'components' | 'categories' | 'code' = 'components';
   
   // Category form and state
   showCategoryForm = false;
@@ -38,6 +38,14 @@ export class Components implements OnInit {
   // Details view
   showDetailsModal = false;
   detailsComponent: LabComponent | null = null;
+  
+  // Code management
+  codeExplanations: CodeExplanation[] = [];
+  showCodeForm = false;
+  isEditCode = false;
+  selectedCodeExplanation: CodeExplanation | null = null;
+  codeForm: FormGroup;
+  selectedComponentForCode: LabComponent | null = null;
   
   // File upload properties
   selectedFile: File | null = null;
@@ -65,6 +73,17 @@ export class Components implements OnInit {
     ]
   };
 
+  // Code editor configuration (focused on code editing)
+  quillCodeConfig = {
+    toolbar: [
+      ['bold', 'italic'],
+      ['code-block'],
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      ['clean'],
+      ['link']
+    ]
+  };
+
   constructor(private compService: CompService, private fb: FormBuilder, private cdr: ChangeDetectorRef) {
     this.componentForm = this.fb.group({
       title: ['', [Validators.required, Validators.minLength(2)]],
@@ -79,6 +98,12 @@ export class Components implements OnInit {
       name: ['', [Validators.required, Validators.minLength(2)]],
       description: ['']
     });
+    
+    this.codeForm = this.fb.group({
+      component_id: [null, [Validators.required]],
+      description: ['', [Validators.required]],
+      code: ['', [Validators.required]]
+    });
   }
 
   ngOnInit() {
@@ -86,10 +111,14 @@ export class Components implements OnInit {
     this.loadCategories();
   }
 
-  setActiveTab(tab: 'components' | 'categories') {
+  setActiveTab(tab: 'components' | 'categories' | 'code') {
     this.activeTab = tab;
     this.cancelForm();
     this.cancelCategoryForm();
+    this.cancelCodeForm();
+    if (tab === 'code') {
+      this.loadCodeExplanations();
+    }
     this.forceUpdate(); // Force immediate update
   }
 
@@ -477,5 +506,166 @@ export class Components implements OnInit {
     this.showDetailsModal = false;
     this.detailsComponent = null;
     this.forceUpdate();
+  }
+
+  // ===== CODE MANAGEMENT METHODS =====
+
+  loadCodeExplanations() {
+    this.codeExplanations = []; // Reset the array
+    this.loading = true;
+    
+    // Load code explanations for all components
+    this.components.forEach(component => {
+      this.compService.getCodeExplanations(component.id).subscribe({
+        next: (codes) => {
+          this.codeExplanations.push(...codes);
+          this.forceUpdate();
+        },
+        error: (err) => {
+          console.error(`Error loading code explanations for component ${component.id}:`, err);
+        },
+        complete: () => {
+          this.loading = false;
+          this.forceUpdate();
+        }
+      });
+    });
+  }
+
+  addCodeExplanation(component?: LabComponent) {
+    console.log('addCodeExplanation called with component:', component);
+    
+    // Reset form state first
+    this.codeForm.reset();
+    this.isEditCode = false;
+    this.selectedCodeExplanation = null;
+    this.selectedComponentForCode = component || null;
+    
+    // Switch to Arduino Code tab
+    this.activeTab = 'code';
+    this.cancelForm();
+    this.cancelCategoryForm();
+    // Don't call cancelCodeForm() here as we want to show the form
+    this.loadCodeExplanations();
+    
+    // Now show the form
+    this.showCodeForm = true;
+    
+    console.log('showCodeForm set to:', this.showCodeForm);
+    console.log('activeTab set to:', this.activeTab);
+    
+    // Enable the component_id field when adding new code
+    this.codeForm.get('component_id')?.enable();
+    
+    if (component) {
+      this.codeForm.patchValue({
+        component_id: component.id
+      });
+      console.log('Form patched with component_id:', component.id);
+    }
+    this.forceUpdate();
+  }
+
+  editCodeExplanation(codeExplanation: CodeExplanation) {
+    this.selectedCodeExplanation = codeExplanation;
+    this.isEditCode = true;
+    this.showCodeForm = true;
+    this.selectedComponentForCode = codeExplanation.component;
+    
+    this.codeForm.patchValue({
+      component_id: codeExplanation.component.id,
+      description: codeExplanation.description,
+      code: codeExplanation.code
+    });
+    
+    // Disable the component_id field when editing
+    this.codeForm.get('component_id')?.disable();
+    
+    this.forceUpdate();
+  }
+
+  saveCodeExplanation() {
+    if (this.codeForm.invalid) {
+      this.showError('Please fill in all required fields correctly');
+      return;
+    }
+
+    const formValue = this.codeForm.value;
+    
+    if (this.isEditCode && this.selectedCodeExplanation) {
+      this.compService.updateCodeExplanation(this.selectedCodeExplanation.id, formValue).subscribe({
+        next: (result) => {
+          this.showSuccess('Arduino code updated successfully');
+          // Update the code in the array immediately
+          const index = this.codeExplanations.findIndex(c => c.id === this.selectedCodeExplanation!.id);
+          if (index !== -1) {
+            this.codeExplanations[index] = result;
+          }
+          this.cancelCodeForm();
+          this.forceUpdate();
+        },
+        error: (err) => {
+          console.error('Error updating code explanation:', err);
+          this.showError('Failed to update Arduino code. Please try again.');
+          this.forceUpdate();
+        }
+      });
+    } else {
+      this.compService.createCodeExplanation(formValue.component_id, formValue).subscribe({
+        next: (result) => {
+          this.showSuccess('Arduino code added successfully');
+          // Add the new code to the array immediately
+          this.codeExplanations.unshift(result);
+          this.cancelCodeForm();
+          this.forceUpdate();
+        },
+        error: (err) => {
+          console.error('Error creating code explanation:', err);
+          this.showError('Failed to add Arduino code. Please try again.');
+          this.forceUpdate();
+        }
+      });
+    }
+  }
+
+  deleteCodeExplanation(codeExplanation: CodeExplanation) {
+    if (!confirm(`Are you sure you want to delete this Arduino code for "${codeExplanation.component.title}"? This action cannot be undone.`)) return;
+    
+    this.compService.deleteCodeExplanation(codeExplanation.id).subscribe({
+      next: () => {
+        this.showSuccess('Arduino code deleted successfully');
+        // Remove the code from the array immediately
+        this.codeExplanations = this.codeExplanations.filter(c => c.id !== codeExplanation.id);
+        this.forceUpdate();
+      },
+      error: (err) => {
+        console.error('Error deleting code explanation:', err);
+        this.showError('Failed to delete Arduino code. Please try again.');
+        this.forceUpdate();
+      }
+    });
+  }
+
+  cancelCodeForm() {
+    this.showCodeForm = false;
+    this.selectedCodeExplanation = null;
+    this.isEditCode = false;
+    this.selectedComponentForCode = null;
+    this.codeForm.reset();
+    
+    // Ensure the component_id field is enabled when canceling
+    this.codeForm.get('component_id')?.enable();
+    
+    this.forceUpdate();
+  }
+
+  // Helper method to get component by ID
+  getComponentById(componentId: number): LabComponent | null {
+    return this.components.find(c => c.id === componentId) || null;
+  }
+
+  // TrackBy function for code explanations
+  trackByCodeId(index: number, code: CodeExplanation): number {
+    return code.id;
   }
 }
